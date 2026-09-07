@@ -15,4 +15,5 @@ Initial reviewed baseline.
 - documented provenance, observed versions/status, and source SHAs for six researched upstream design skills;
 - added Agent Skills/OpenClaw-oriented structural validation and installation notes;
 - added repository CI to execute bundled skill validators after integration;
+- hardened validation for skill-name/description limits, directory-name matching, progressive disclosure, required references, and referenced-file existence;
 - deliberately avoided React, Next.js, Tailwind, Motion, or any other framework as a universal default.

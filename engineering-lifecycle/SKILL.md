@@ -20,7 +20,7 @@ Use this as the coordinating entry point when the correct engineering path is no
 5. For work larger than one safe execution unit, use `work-decomposition` to create an acyclic dependency graph and ready frontier.
 6. Use `software-architecture` for boundary, interface, data-flow, or structural decisions that materially affect multiple work units.
 7. Execute with `implementation`, `testing`, and `debugging` as needed; do not force TDD where another verification loop is stronger.
-8. Review independently. Use `code-review`; add `security-review` when trust boundaries, sensitive data, authorization, external input, dependencies, or deployment risk make it relevant. Add `frontend-design-wordpress` for UI/UX/WordPress scope.
+8. Review independently. Use `code-review`; add `security-review` when trust boundaries, sensitive data, authorization, external input, dependencies, or deployment risk make it relevant. Add `web-frontend-design` for web UI/UX, responsive, accessibility, visual-design, or frontend-audit scope. When the target uses WordPress, that skill loads its WordPress adapter rather than becoming a separate lifecycle branch.
 9. Use `integration-release` only after the required evidence gates pass.
 10. Use `project-handoff` when work crosses an agent/session boundary.
 

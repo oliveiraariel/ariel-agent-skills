@@ -21,7 +21,7 @@ software-architecture
   ↓
 implementation ↔ testing ↔ debugging
   ↓
-code-review + security-review (+ frontend-design-wordpress when relevant)
+code-review + security-review (+ web-frontend-design when relevant)
   ↓
 integration-release
   ↓
@@ -48,7 +48,11 @@ project-handoff when crossing an execution/session boundary
 | [security-review](./security-review/) | Threat- and evidence-driven security review | `0.1.0` |
 | [integration-release](./integration-release/) | Merge, CI, migration, release, and rollback discipline | `0.1.0` |
 | [project-handoff](./project-handoff/) | Compact continuity across agents/sessions | `0.1.0` |
-| [frontend-design-wordpress](./frontend-design-wordpress/) | UI/UX, responsive, accessibility, and WordPress frontend | `0.1.0` |
+| [web-frontend-design](./web-frontend-design/) | Framework-neutral web UI/UX, responsive design, accessibility, and optional platform adapters including WordPress | `0.2.0` |
+
+### Web frontend scope
+
+`web-frontend-design` is the general web frontend design skill. It is not a WordPress-only skill and does not select or impose a framework. It can be used with React, Vue, Angular, Svelte, server-rendered frameworks, template engines, or plain HTML/CSS/JavaScript. WordPress remains supported through a focused adapter loaded only when the target project actually uses WordPress.
 
 ## Machine-readable registry
 
@@ -62,7 +66,7 @@ Run:
 
 ```bash
 python3 scripts/validate_ecosystem.py
-python3 frontend-design-wordpress/scripts/validate_skill.py
+python3 web-frontend-design/scripts/validate_skill.py
 ```
 
 GitHub Actions runs both classes of validation on `main`, feature branches, and pull requests.

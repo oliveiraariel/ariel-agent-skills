@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Structural validator for frontend-design-wordpress.
+"""Structural validator for web-frontend-design.
 
 Uses only the Python standard library. It validates project-level invariants plus
 key Agent Skills naming/description constraints and the stricter OpenClaw
@@ -131,7 +131,7 @@ def main():
         print(f"\nValidation failed with {errors} error(s).")
         return 1
 
-    print("frontend-design-wordpress: structure OK")
+    print("web-frontend-design: structure OK")
     print(f"Name: {frontmatter['name']} ({len(frontmatter['name'])} chars)")
     print(f"Description: {len(frontmatter['description'])} chars")
     print(f"SKILL.md: {line_count} lines")

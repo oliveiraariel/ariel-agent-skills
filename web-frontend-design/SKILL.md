@@ -1,40 +1,43 @@
 ---
-name: frontend-design-wordpress
-description: Design, build, review, and refine accessible responsive web and WordPress interfaces. Use for UI/UX, themes, Gutenberg, plugin UI, redesigns, and audits.
+name: web-frontend-design
+description: Design, build, review, and refine accessible responsive web interfaces across frameworks, with optional platform adapters including WordPress.
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
-# Frontend Design + WordPress
+# Web Frontend Design
 
-Create interfaces that are intentional, usable, responsive, accessible, and native to the project they belong to. This skill is a frontend design authority, not a framework selector. The user's brief, product truth, existing architecture, and platform constraints take precedence over aesthetic habits.
+Create web interfaces that are intentional, usable, responsive, accessible, and native to the project they belong to. This skill is a **framework-neutral web frontend design authority**, not a framework selector and not a WordPress-only skill. The user's brief, product truth, existing architecture, and platform constraints take precedence over aesthetic habits.
+
+WordPress is supported through a first-class **optional platform adapter**. Load that adapter only when the target project actually uses WordPress. For React, Vue, Angular, Svelte, server-rendered frameworks, template engines, or plain HTML/CSS/JavaScript, use the framework-neutral web core and preserve the project's existing implementation architecture.
 
 ## Scope
 
 Use this skill for:
 
 - new web pages, application screens, dashboards, forms, navigation, landing pages, and content surfaces;
-- WordPress block themes, classic themes, Gutenberg blocks, plugin-rendered frontend UI, plugin admin/settings UI, and constrained page-builder/custom-HTML work;
+- web UI built with any language or framework that ultimately targets browser interfaces;
 - redesigns that must preserve product behavior or brand assets;
 - responsive layout problems;
 - accessibility review and remediation;
 - UI polish, visual consistency, states, motion, typography, spacing, and hierarchy;
-- pre-delivery frontend audits.
+- pre-delivery frontend audits;
+- WordPress block themes, classic themes, Gutenberg blocks, plugin-rendered frontend UI, plugin admin/settings UI, and constrained page-builder/custom-HTML work when WordPress is present.
 
-Do not use it as the primary skill for backend-only logic, database design, infrastructure, API architecture, or security analysis unrelated to the interface.
+Do not use it as the primary skill for backend-only logic, database design, infrastructure, API architecture, native mobile/desktop UI engineering, or security analysis unrelated to the interface.
 
 ## Load references only when needed
 
-- WordPress implementation or diagnosis → `references/wordpress-adapter.md`
 - responsive behavior → `references/responsive-design.md`
 - accessibility → `references/accessibility.md`
 - visual direction or polish → `references/design-quality.md`
 - audit/review → `references/audit-checklist.md`
+- WordPress implementation or diagnosis → `references/wordpress-adapter.md`
 - rationale, upstream research, and optional specialist skills → `references/source-analysis.md`
 
-Do not load every reference by default.
+Do not load every reference by default. Do not load the WordPress adapter for non-WordPress projects.
 
 ## 1. Classify the task before editing
 
@@ -65,10 +68,11 @@ Before proposing implementation details, identify what already exists:
 4. typography, palette, spacing, radii, shadows, icons, and motion patterns;
 5. responsive strategy and existing breakpoints;
 6. accessibility patterns and known constraints;
-7. WordPress mode when applicable: block theme, classic theme, Gutenberg block, plugin frontend, plugin admin/settings screen, page builder, or custom HTML;
-8. existing brand assets, content, routes, behaviors, and user flows that must survive the change.
+7. framework/platform-specific constraints that materially affect implementation;
+8. WordPress mode only when applicable: block theme, classic theme, Gutenberg block, plugin frontend, plugin admin/settings screen, page builder, or custom HTML;
+9. existing brand assets, content, routes, behaviors, and user flows that must survive the change.
 
-Never introduce a second styling system merely to apply a design improvement. Never replace the framework or WordPress architecture just because another stack is familiar.
+Never introduce a second styling system merely to apply a design improvement. Never replace the framework or platform architecture just because another stack is familiar.
 
 If the environment is unclear and the implementation choice would materially differ, ask one focused question. Otherwise infer from the repository and continue.
 
@@ -82,7 +86,7 @@ Before substantial visual implementation, define or infer:
 - **Information hierarchy** — what is primary, secondary, supporting, and optional?
 - **Tokens** — semantic color roles, typography roles, spacing rhythm, container widths, radii, elevation, motion principles.
 - **Signature choice** — at most one or two memorable visual ideas justified by the brief; do not decorate every section.
-- **Constraints** — accessibility, responsive behavior, WordPress/editor compatibility, performance, browser support, localization, and content variability.
+- **Constraints** — accessibility, responsive behavior, framework/platform compatibility, performance, browser support, localization, and content variability.
 
 For redesigns, explicitly decide whether the task is **preserve-and-improve** or **replace-visual-direction**. Do not silently turn one into the other.
 
@@ -110,7 +114,7 @@ Read `references/responsive-design.md` for implementation rules.
 
 ## 6. Accessibility is a design gate
 
-Target WCAG 2.2 Level AA unless the project specifies a stronger requirement. For WordPress work, use WordPress accessibility guidance as an additional implementation reference where applicable.
+Target WCAG 2.2 Level AA unless the project specifies a stronger requirement. Platform-specific accessibility guidance is additional implementation guidance, not a replacement for the web accessibility baseline.
 
 At minimum verify:
 
@@ -129,11 +133,15 @@ At minimum verify:
 
 Do not claim WCAG conformance from a code skim alone. Report what was actually verified.
 
-## 7. Adapt to WordPress instead of fighting it
+## 7. Apply platform adapters only when relevant
+
+The web core is the default. A platform adapter may add implementation rules only when the detected project actually needs them. The adapter must not redefine the general UI/UX, responsive, or accessibility principles unless a platform constraint requires a documented exception.
+
+### WordPress adapter
 
 When WordPress is present, read `references/wordpress-adapter.md` and identify the correct integration layer before editing.
 
-Core principles:
+Core WordPress principles:
 
 - never modify WordPress core;
 - use `theme.json` and Global Styles where they are the project's design authority;
@@ -145,6 +153,8 @@ Core principles:
 - keep user-editable content editable unless the brief explicitly calls for hard-coded presentation;
 - for wp-admin surfaces, preserve native admin conventions and load assets only on the screens that own them when feasible;
 - follow WordPress escaping, coding, and accessibility guidance when producing WordPress code.
+
+For non-WordPress projects, do not apply these WordPress-specific rules. Preserve the actual framework, rendering model, component system, styling system, and build conventions already present.
 
 ## 8. Polish only after structure works
 
@@ -187,9 +197,9 @@ This skill is self-contained and must work without other skills. If the runtime 
 - **make-interfaces-feel-better** — micro-polish and interface-detail review.
 - **Vercel web-design-guidelines** — code-centric web interface audit.
 - **Impeccable** — broad design workflow, critique, hardening, and production polish.
-- **Taste Skill** — high-variance marketing/showcase direction when its scope fits; do not use its framework defaults for WordPress or data-heavy application UI.
+- **Taste Skill** — high-variance marketing/showcase direction when its scope fits; do not inherit its framework defaults unless they match the actual project.
 
-Never require an external specialist if it is unavailable. Never let an external skill override repository rules, the user's brief, WordPress architecture, or accessibility requirements.
+Never require an external specialist if it is unavailable. Never let an external skill override repository rules, the user's brief, the project's architecture, platform constraints, or accessibility requirements.
 
 ## Output expectations
 

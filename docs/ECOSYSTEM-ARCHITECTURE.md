@@ -33,8 +33,15 @@ Examples:
 
 - a well-specified one-file bug may require `debugging` + `testing` + `code-review`;
 - an ambiguous new subsystem may require discovery → domain/spec → work graph → architecture → implementation/testing → review;
-- frontend WordPress work can add `frontend-design-wordpress` without replacing backend/security review;
+- web UI/UX work can add `web-frontend-design` without replacing implementation, backend, testing, or security review;
+- WordPress is handled inside `web-frontend-design` through its platform adapter only when WordPress is actually present;
 - a cross-session boundary can add `project-handoff` without duplicating the spec or ADRs.
+
+## Frontend specialization boundary
+
+`web-frontend-design` is a **framework-neutral web frontend design skill**, not a WordPress-only skill. Its core covers UI/UX, responsive behavior, accessibility, visual systems, interaction states, redesign, polish, and audits across web stacks. Platform-specific guidance is progressively disclosed through adapters. WordPress is currently the first deep adapter because its theme, block, plugin, admin, and Global Styles architecture requires dedicated implementation guidance.
+
+The skill should therefore be selected for relevant web frontend capabilities regardless of whether the project uses React, Vue, Angular, Svelte, server-rendered templates, plain HTML/CSS/JavaScript, WordPress, or another web stack. Framework/runtime engineering concerns that are outside visual/interaction design remain the responsibility of `software-architecture`, `implementation`, `testing`, `debugging`, `code-review`, and other engineering skills.
 
 ## Runtime neutrality
 

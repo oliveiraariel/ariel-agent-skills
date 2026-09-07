@@ -1,0 +1,44 @@
+name: Validate skills
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/SKILL.md'
+      - '**/scripts/validate_skill.py'
+      - '**/references/**'
+      - '**/README.md'
+      - '**/CHANGELOG.md'
+      - '.github/workflows/validate-skills.yml'
+  pull_request:
+    paths:
+      - '**/SKILL.md'
+      - '**/scripts/validate_skill.py'
+      - '**/references/**'
+      - '**/README.md'
+      - '**/CHANGELOG.md'
+      - '.github/workflows/validate-skills.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate discovered skill validators
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t validators < <(find . -type f -path '*/scripts/validate_skill.py' | sort)
+          if [ "${#validators[@]}" -eq 0 ]; then
+            echo 'No skill validators found.' >&2
+            exit 1
+          fi
+          for validator in "${validators[@]}"; do
+            echo "Running $validator"
+            python3 "$validator"
+          done

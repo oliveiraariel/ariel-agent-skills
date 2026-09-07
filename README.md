@@ -6,25 +6,63 @@ This repository is dedicated to the development, experimentation, documentation,
 
 The goal is to create practical, structured, and evolving skills that can be used, adapted, studied, and improved by other developers and AI enthusiasts.
 
-## Skills
+## Skills currently present
 
 | Skill | Description | Status |
 |---|---|---|
-| [Orchestrator](./orchestrator/) | Skill focused on coordinating tasks, workflows, tools, and specialized agents in structured processes. | In development |
+| [Frontend Design + WordPress](./frontend-design-wordpress/) | Framework-neutral frontend design skill specialized in UI/UX, responsive design, accessibility, and WordPress architecture. | `0.1.0` — reviewed baseline / field testing |
 
-More skills may be added as the repository evolves.
+## Planned migration
 
-## Repository Structure
+**Orchestrator** is planned for this collection but is **not currently present in this repository**. It should only be added to the skills table and repository tree after its files are actually migrated here.
+
+## Repository structure
 
 ```text
 ariel-agent-skills/
+├── .github/
+│   └── workflows/
+│       └── validate-skills.yml
 ├── README.md
 ├── LICENSE
-│
-├── orchestrator/
-│   ├── SKILL.md
-│   ├── references/
-│   ├── scripts/
-│   └── assets/
-│
-└── future-skills/
+└── frontend-design-wordpress/
+    ├── SKILL.md
+    ├── README.md
+    ├── CHANGELOG.md
+    ├── references/
+    │   ├── accessibility.md
+    │   ├── audit-checklist.md
+    │   ├── design-quality.md
+    │   ├── responsive-design.md
+    │   ├── source-analysis.md
+    │   └── wordpress-adapter.md
+    └── scripts/
+        └── validate_skill.py
+```
+
+The tree above describes files/directories that actually exist in this repository; planned skills should not be represented as present until they are migrated.
+
+## Validation
+
+The repository contains `.github/workflows/validate-skills.yml`. Once the workflow is present on the base branch, relevant pull requests and pushes to `main` discover bundled `scripts/validate_skill.py` validators and execute each with Python 3. For the first integration PR that introduces the workflow itself, the push to `main` after merge may be the first CI execution.
+
+Each skill may also document runtime-specific validation commands in its own README.
+
+## Design philosophy
+
+Skills in this repository should prefer:
+
+- clear activation scope and boundaries;
+- progressive disclosure through focused references;
+- project-context detection instead of hard-coded stack assumptions;
+- verifiable workflows and explicit quality gates;
+- portability across compatible agent runtimes where practical;
+- documented provenance when external projects materially influence a skill;
+- normative standards kept distinct from platform guidance and author heuristics;
+- version-sensitive platform features documented with explicit compatibility boundaries.
+
+## Multi-skill repository note
+
+This repository is intended to contain multiple skills over time. Some agent runtimes can scan nested `SKILL.md` files from a configured skill root, while installers may expect a `SKILL.md` at the source directory root. Follow each skill's README for runtime-specific installation guidance.
+
+See each skill's own README and `SKILL.md` for its operating contract.

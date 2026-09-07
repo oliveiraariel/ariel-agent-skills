@@ -107,7 +107,7 @@ That makes it suitable for portable skill ecosystems that understand the Agent S
 
 OpenClaw follows the Agent Skills format. This skill keeps its discovery description under 160 characters and its `name` aligned with the directory name.
 
-Because `ariel-agent-skills` is a **multi-skill repository**, do not assume the OpenClaw Git installer can install the repository root as one skill: Git/local installs expect `SKILL.md` at the source root.
+Because `ariel-agent-skills` is a **multi-skill repository**, do not assume the OpenClaw Git installer can install the repository root as one skill: Git/local installs expect `SKILL.md` at the source directory root.
 
 A reliable local workflow is:
 
@@ -141,6 +141,8 @@ After installing in OpenClaw:
 openclaw skills check
 openclaw skills info frontend-design-wordpress
 ```
+
+The repository also includes `.github/workflows/validate-skills.yml`. Once that workflow exists on the base branch, relevant pull requests and pushes to `main` execute each discovered `scripts/validate_skill.py`. The initial integration PR that introduces the workflow may not receive a pre-merge run because the workflow does not yet exist on the base branch; the push to `main` after merge provides the first repository CI execution.
 
 ## Status and maturity
 

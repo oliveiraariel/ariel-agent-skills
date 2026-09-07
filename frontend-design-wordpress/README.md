@@ -95,7 +95,7 @@ The architecture was developed after revalidating six notable frontend design sk
 
 See [`references/source-analysis.md`](./references/source-analysis.md) for the detailed comparison, validation snapshot, strengths, limits, ideas adopted/rejected, standards sources, runtime compatibility, and licensing/provenance policy.
 
-The WordPress layer additionally uses primary WordPress Developer/Make Core documentation and W3C WCAG 2.2.
+The WordPress layer additionally uses primary WordPress Developer/Make Core documentation and W3C WCAG 2.2. The design-quality layer is an independent synthesis: researched aesthetic preferences remain heuristics unless separately grounded in a standard or project requirement.
 
 ## External skills are optional
 

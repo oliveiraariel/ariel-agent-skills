@@ -55,6 +55,8 @@ Use `accessibility.md`:
 - images/media;
 - table/chart alternatives.
 
+When reporting a standards failure, identify the normative requirement only when it is actually established. Keep platform guidance and usability heuristics labeled separately.
+
 ### C. Responsive behavior
 
 Use `responsive-design.md`:
@@ -66,7 +68,8 @@ Use `responsive-design.md`:
 - dense data/tables;
 - dialogs/overlays;
 - long content/localization;
-- viewport/safe area concerns.
+- viewport/safe area concerns;
+- version-sensitive WordPress responsive behavior where applicable.
 
 ### D. WordPress architecture
 
@@ -77,8 +80,11 @@ When applicable use `wordpress-adapter.md`:
 - editor/frontend parity;
 - appropriate `theme.json`/theme/plugin/block ownership;
 - scoped plugin/custom-HTML CSS;
+- wp-admin/plugin-settings assets scoped to the owning screens;
+- no global wp-admin restyling unless explicitly intended and justified;
 - maintainable asset loading;
-- WordPress coding/accessibility conventions.
+- WordPress coding/accessibility guidance applied at the correct scope;
+- version-sensitive features checked against the target WordPress/Gutenberg version.
 
 ### E. Visual hierarchy and consistency
 
@@ -130,13 +136,14 @@ Distinguish:
 
 For WordPress surfaces, also check:
 
-- theme/plugin ownership of changed CSS;
+- theme/plugin/admin ownership of changed CSS/JS;
 - update-safety of edited files;
 - block editor versus frontend rendering;
 - Global Styles/token duplication;
 - full/wide/content alignment behavior;
 - plugin styles leaking outside the plugin wrapper;
 - theme styles unintentionally overriding plugin controls;
+- plugin-admin assets leaking into unrelated wp-admin screens;
 - accessible output after WordPress filters/plugins modify markup.
 
 ## 6. Visual verification

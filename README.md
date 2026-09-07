@@ -20,6 +20,9 @@ The goal is to create practical, structured, and evolving skills that can be use
 
 ```text
 ariel-agent-skills/
+├── .github/
+│   └── workflows/
+│       └── validate-skills.yml
 ├── README.md
 ├── LICENSE
 └── frontend-design-wordpress/
@@ -38,6 +41,12 @@ ariel-agent-skills/
 ```
 
 The tree above describes files/directories that actually exist in this repository; planned skills should not be represented as present until they are migrated.
+
+## Validation
+
+Pull requests and pushes that touch skill files run `.github/workflows/validate-skills.yml`. The workflow discovers bundled `scripts/validate_skill.py` validators and executes each with Python 3.
+
+Each skill may also document runtime-specific validation commands in its own README.
 
 ## Design philosophy
 

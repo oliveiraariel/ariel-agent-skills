@@ -1,68 +1,80 @@
 # Ariel Agent Skills
 
-A collection of public AI agent skills created and maintained by Ariel Oliveira.
+A compact, runtime-neutral software-engineering skill ecosystem maintained by Ariel Oliveira.
 
-This repository is dedicated to the development, experimentation, documentation, and continuous improvement of reusable skills for AI agents.
+The repository favors a small set of high-leverage skills over collecting every upstream idea. Skills are selected for broad reuse, clear boundaries, composability, and verifiable outcomes. Provider-specific or low-value workflows are not promoted into the core ecosystem merely because they exist upstream.
 
-The goal is to create practical, structured, and evolving skills that can be used, adapted, studied, and improved by other developers and AI enthusiasts.
-
-## Skills currently present
-
-| Skill | Description | Status |
-|---|---|---|
-| [Frontend Design + WordPress](./frontend-design-wordpress/) | Framework-neutral frontend design skill specialized in UI/UX, responsive design, accessibility, and WordPress architecture. | `0.1.0` — reviewed baseline / field testing |
-
-## Planned migration
-
-**Orchestrator** is planned for this collection but is **not currently present in this repository**. It should only be added to the skills table and repository tree after its files are actually migrated here.
-
-## Repository structure
+## Core engineering lifecycle
 
 ```text
-ariel-agent-skills/
-├── .github/
-│   └── workflows/
-│       └── validate-skills.yml
-├── README.md
-├── LICENSE
-└── frontend-design-wordpress/
-    ├── SKILL.md
-    ├── README.md
-    ├── CHANGELOG.md
-    ├── references/
-    │   ├── accessibility.md
-    │   ├── audit-checklist.md
-    │   ├── design-quality.md
-    │   ├── responsive-design.md
-    │   ├── source-analysis.md
-    │   └── wordpress-adapter.md
-    └── scripts/
-        └── validate_skill.py
+objective
+  ↓
+project-discovery
+  ↓
+technical-research / domain-modeling (when needed)
+  ↓
+software-specification
+  ↓
+work-decomposition
+  ↓
+software-architecture
+  ↓
+implementation ↔ testing ↔ debugging
+  ↓
+code-review + security-review (+ frontend-design-wordpress when relevant)
+  ↓
+integration-release
+  ↓
+project-handoff when crossing an execution/session boundary
 ```
 
-The tree above describes files/directories that actually exist in this repository; planned skills should not be represented as present until they are migrated.
+`engineering-lifecycle` is the coordinating skill. It selects only the stages required by the task; it is not an instruction to run every skill every time.
+
+## Skills
+
+| Skill | Primary role | Status |
+|---|---|---|
+| [engineering-lifecycle](./engineering-lifecycle/) | Select and coordinate the engineering flow | `0.1.0` |
+| [project-discovery](./project-discovery/) | Understand the real project before planning | `0.1.0` |
+| [technical-research](./technical-research/) | Evidence-backed technical investigation and bounded prototypes | `0.1.0` |
+| [domain-modeling](./domain-modeling/) | Vocabulary, invariants, scenarios, and domain decisions | `0.1.0` |
+| [software-specification](./software-specification/) | Turn intent into an implementable contract | `0.1.0` |
+| [work-decomposition](./work-decomposition/) | Build a dependency graph and executable frontier | `0.1.0` |
+| [software-architecture](./software-architecture/) | Boundaries, seams, trade-offs, and ADR-grade decisions | `0.1.0` |
+| [implementation](./implementation/) | Build scoped vertical slices | `0.1.0` |
+| [testing](./testing/) | Risk-based verification and regression protection | `0.1.0` |
+| [debugging](./debugging/) | Reproducible diagnosis and regression-safe fixes | `0.1.0` |
+| [code-review](./code-review/) | Independent spec and standards review | `0.1.0` |
+| [security-review](./security-review/) | Threat- and evidence-driven security review | `0.1.0` |
+| [integration-release](./integration-release/) | Merge, CI, migration, release, and rollback discipline | `0.1.0` |
+| [project-handoff](./project-handoff/) | Compact continuity across agents/sessions | `0.1.0` |
+| [frontend-design-wordpress](./frontend-design-wordpress/) | UI/UX, responsive, accessibility, and WordPress frontend | `0.1.0` |
+
+## Machine-readable registry
+
+- `registry/skills.json` is the portable skill catalog.
+- `registry/capabilities.json` is the capability vocabulary used for orchestration and selection.
+- The registry fields intentionally map to the Adaptive AI Orchestrator `SkillProfile` contract.
 
 ## Validation
 
-The repository contains `.github/workflows/validate-skills.yml`. Once the workflow is present on the base branch, relevant pull requests and pushes to `main` discover bundled `scripts/validate_skill.py` validators and execute each with Python 3. For the first integration PR that introduces the workflow itself, the push to `main` after merge may be the first CI execution.
+Run:
 
-Each skill may also document runtime-specific validation commands in its own README.
+```bash
+python3 scripts/validate_ecosystem.py
+python3 frontend-design-wordpress/scripts/validate_skill.py
+```
 
-## Design philosophy
+GitHub Actions runs both classes of validation on `main`, feature branches, and pull requests.
 
-Skills in this repository should prefer:
+## Design rules
 
-- clear activation scope and boundaries;
-- progressive disclosure through focused references;
-- project-context detection instead of hard-coded stack assumptions;
-- verifiable workflows and explicit quality gates;
-- portability across compatible agent runtimes where practical;
-- documented provenance when external projects materially influence a skill;
-- normative standards kept distinct from platform guidance and author heuristics;
-- version-sensitive platform features documented with explicit compatibility boundaries.
+- Prefer broad engineering capability over author- or provider-specific behavior.
+- Keep runtime-specific mechanics in adapters, not in the skill's core contract.
+- Use progressive disclosure and context pointers rather than loading every reference by default.
+- Define checkable completion criteria and evidence for important claims.
+- Preserve existing architecture unless the task explicitly requires changing it.
+- Treat security, integrity, and explicit human authority as constraints on autonomy.
+- Avoid duplicate skills when one coherent skill can absorb the useful mechanism.
 
-## Multi-skill repository note
-
-This repository is intended to contain multiple skills over time. Some agent runtimes can scan nested `SKILL.md` files from a configured skill root, while installers may expect a `SKILL.md` at the source directory root. Follow each skill's README for runtime-specific installation guidance.
-
-See each skill's own README and `SKILL.md` for its operating contract.
+The upstream evaluation and keep/discard decisions are documented in [`docs/MATT-SKILLS-EVALUATION.md`](./docs/MATT-SKILLS-EVALUATION.md).

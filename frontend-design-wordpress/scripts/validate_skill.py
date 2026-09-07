@@ -27,6 +27,7 @@ REQUIRED_FILES = [
 REQUIRED_FRONTMATTER_KEYS = {"name", "description", "license"}
 EXPECTED_NAME = SKILL_DIR.name
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+REFERENCE_RE = re.compile(r"`((?:references|scripts)/[A-Za-z0-9._/-]+(?:\.md|\.py))`")
 AGENT_SKILLS_NAME_MAX = 64
 AGENT_SKILLS_DESCRIPTION_MAX = 1024
 OPENCLAW_DESCRIPTION_MAX = 160
@@ -120,9 +121,7 @@ def main():
             fail(f"missing required file: {relative}")
             errors += 1
 
-    referenced_paths = set(
-        re.findall(r"`((?:references|scripts)/[A-Za-z0-9._/-]+)`", text)
-    )
+    referenced_paths = set(REFERENCE_RE.findall(text))
     for relative in sorted(referenced_paths):
         if not (SKILL_DIR / relative).is_file():
             fail(f"SKILL.md references missing file: {relative}")

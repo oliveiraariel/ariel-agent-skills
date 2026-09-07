@@ -127,7 +127,7 @@ From the repository root, run the bundled dependency-free validator:
 python frontend-design-wordpress/scripts/validate_skill.py
 ```
 
-It checks project invariants plus key Agent Skills/OpenClaw constraints: skill name/directory alignment, naming syntax, description limits, progressive-disclosure line limit, and required files/references.
+It checks project invariants plus key Agent Skills/OpenClaw constraints: skill name/directory alignment, naming syntax, description limits, progressive-disclosure line limit, required files, and explicitly referenced local Markdown/Python files.
 
 When available, also use the official/reference runtime checks rather than relying only on the bundled validator:
 

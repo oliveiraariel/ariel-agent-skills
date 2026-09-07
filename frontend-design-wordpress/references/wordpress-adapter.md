@@ -12,6 +12,7 @@ Classify before editing:
 | Classic theme | `style.css`, PHP templates, `functions.php`, hooks, enqueued assets | Respect theme hierarchy and existing PHP/CSS architecture. |
 | Custom Gutenberg block | `block.json`, edit/save or server render, block supports, block styles | Editor state and frontend output must remain semantically and visually coherent. |
 | Plugin-rendered frontend | plugin templates/shortcodes/blocks, scoped CSS/JS, conditional enqueue | Avoid relying on theme internals unless the plugin explicitly integrates with them. |
+| Plugin admin/settings UI | WordPress admin pages, settings/forms, screen-specific assets, existing admin patterns | Preserve wp-admin conventions; avoid globally restyling the admin. |
 | Page builder | builder-native structure/styles plus theme constraints | Avoid brittle overrides; keep changes compatible with the builder's generated markup. |
 | Custom HTML block/content | local wrapper + scoped CSS, minimal JS | Treat as constrained embedding, not a substitute for maintainable theme/plugin code. |
 
@@ -37,9 +38,13 @@ When a block theme or Global Styles is the design authority:
 3. Prefer changes at the narrowest correct scope: global → element → block → style variation.
 4. Keep editor and frontend output visually aligned.
 5. Avoid duplicating the same token in `theme.json` and unrelated CSS unless a browser/feature fallback requires it.
-6. Before using newer Global Styles capabilities, confirm the WordPress/Gutenberg version used by the project.
+6. Confirm the target WordPress/Gutenberg version before using version-sensitive Global Styles capabilities.
 
-Current WordPress developer documentation supports responsive Global Styles scoped to named mobile/tablet viewports. Treat this as a platform capability, not permission to scatter arbitrary breakpoint values. Reuse the project's viewport settings and verify generated frontend behavior.
+### Responsive Global Styles boundary
+
+WordPress **7.1+** introduced responsive block style states for `@mobile` and `@tablet`, including Global Styles, individual block instances, and configurable `settings.viewport` breakpoints. Core defaults are 480px for mobile and 782px for tablet unless the theme configures supported values.
+
+Do not assume those APIs exist on WordPress 7.0 or earlier. On older projects, preserve the existing responsive strategy or use maintainable CSS/media/container queries appropriate to the theme/plugin. Even on 7.1+, reuse the project's viewport strategy instead of scattering unrelated breakpoint values.
 
 ## 4. Classic themes
 
@@ -76,7 +81,19 @@ Plugin UIs often live inside themes they do not control. Therefore:
 
 For application-like plugins, prioritize form semantics, data readability, state feedback, focus management, table behavior, and dense-layout responsiveness over marketing-page aesthetics.
 
-## 7. Page builders and Custom HTML
+## 7. Plugin admin/settings UI
+
+WordPress admin screens are a distinct environment. For plugin-owned admin/settings screens:
+
+- preserve established wp-admin interaction and visual conventions unless the product explicitly requires a custom application shell;
+- scope CSS/JS to the plugin's own screens and enqueue it conditionally when feasible;
+- do not globally reset or restyle core admin components;
+- use native semantic controls and WordPress APIs/patterns appropriate to the screen rather than reproducing controls as decorative divs;
+- preserve keyboard operation, labels, focus, notices, validation, and status feedback;
+- treat dense settings/data screens as **Application** surfaces, not marketing pages;
+- if using block-editor packages/components, verify that the target WordPress version provides the expected APIs instead of assuming a standalone React package version.
+
+## 8. Page builders and Custom HTML
 
 Treat these as constrained environments.
 
@@ -96,7 +113,7 @@ For Custom HTML:
 - avoid scripts that depend on undocumented editor DOM;
 - if the component grows beyond a contained snippet, recommend moving it into theme/plugin code rather than expanding an unmaintainable blob.
 
-## 8. Responsive WordPress implementation
+## 9. Responsive WordPress implementation
 
 WordPress can introduce nested content widths, block alignment rules, editor wrappers, and theme spacing. Diagnose overflow at the actual source instead of hiding it globally.
 
@@ -113,9 +130,11 @@ Check:
 
 Do not use `overflow-x: hidden` as the primary fix for unknown overflow; identify the offending element first.
 
-## 9. Accessibility and WordPress
+## 10. Accessibility and WordPress
 
-WordPress's own coding standards expect new/updated ecosystem interfaces to target WCAG 2.2 AA. Follow `references/accessibility.md` and additionally verify:
+This skill uses WCAG 2.2 AA as the baseline for all WordPress interface work. WordPress's Accessibility Coding Standards specifically state that code integrated into the official WordPress ecosystem—including WordPress core, WordPress.org sites, and official plugins—is expected to conform to WCAG 2.2 AA. For third-party themes/plugins/sites, apply WCAG 2.2 AA directly and use relevant WordPress accessibility guidance without implying that an official WordPress conformance policy automatically governs every third-party project.
+
+Additionally verify:
 
 - editor-generated heading order after templates/patterns are composed;
 - navigation block/menu keyboard behavior;
@@ -124,14 +143,14 @@ WordPress's own coding standards expect new/updated ecosystem interfaces to targ
 - alt text behavior for media managed through WordPress;
 - landmark structure across header/main/navigation/footer template parts.
 
-## 10. Source anchors
+## 11. Source anchors
 
 Revalidate implementation details against current official documentation when platform versions matter:
 
 - Theme Handbook: https://developer.wordpress.org/themes/
 - `theme.json`: https://developer.wordpress.org/themes/global-settings-and-styles/introduction-to-theme-json/
 - Block Editor Handbook: https://developer.wordpress.org/block-editor/
-- Global Settings & Styles: https://developer.wordpress.org/block-editor/how-to-guides/themes/global-settings-and-styles/
+- Responsive block styles in WordPress 7.1: https://make.wordpress.org/core/2026/08/05/responsive-block-styles-and-configurable-viewports-in-wordpress-7-1/
 - WordPress Coding Standards: https://developer.wordpress.org/coding-standards/wordpress-coding-standards/
 - WordPress Accessibility Coding Standards: https://developer.wordpress.org/coding-standards/wordpress-coding-standards/accessibility/
 

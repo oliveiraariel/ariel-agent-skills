@@ -342,7 +342,7 @@ Relevant conclusions:
 - Agent Skills allows descriptions up to 1024 characters; OpenClaw's authoring guidance recommends a one-line description under 160 characters for discovery. This project's description follows the stricter OpenClaw recommendation.
 - Agent Skills recommends progressive disclosure, a main `SKILL.md` below 500 lines, and focused one-level references. This bundle follows that structure.
 - OpenClaw follows the Agent Skills format and can discover nested skills in configured skill roots.
-- OpenClaw Git/local installers expect `SKILL.md` at the source root. Because `ariel-agent-skills` is a multi-skill repository, install this skill from its subdirectory locally (or expose the repository as a scanned skill root) rather than assuming the repository root is a single installable skill.
+- OpenClaw Git/local installation expects `SKILL.md` at the directory being installed. Because `ariel-agent-skills` is a multi-skill repository whose repository root has no `SKILL.md`, install the cloned `frontend-design-wordpress` subdirectory locally or expose the repository as a configured/scanned skill root rather than treating the repository root as a single skill.
 
 ## Provenance and licensing rule
 

@@ -2,22 +2,20 @@ name: Validate skills
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'feat/**'
+      - 'analysis/**'
     paths:
       - '**/SKILL.md'
-      - '**/scripts/validate_skill.py'
+      - '**/scripts/*.py'
       - '**/references/**'
       - '**/README.md'
       - '**/CHANGELOG.md'
+      - 'registry/**'
+      - 'docs/**'
       - '.github/workflows/validate-skills.yml'
   pull_request:
-    paths:
-      - '**/SKILL.md'
-      - '**/scripts/validate_skill.py'
-      - '**/references/**'
-      - '**/README.md'
-      - '**/CHANGELOG.md'
-      - '.github/workflows/validate-skills.yml'
 
 permissions:
   contents: read
@@ -29,15 +27,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Validate ecosystem registry and skill contracts
+        run: python3 scripts/validate_ecosystem.py
+
       - name: Validate discovered skill validators
         shell: bash
         run: |
           set -euo pipefail
           mapfile -t validators < <(find . -type f -path '*/scripts/validate_skill.py' | sort)
-          if [ "${#validators[@]}" -eq 0 ]; then
-            echo 'No skill validators found.' >&2
-            exit 1
-          fi
           for validator in "${validators[@]}"; do
             echo "Running $validator"
             python3 "$validator"

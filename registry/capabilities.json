@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "capabilities": [
+    {"id": "orchestration.lifecycle", "description": "Select and coordinate an evidence-gated software engineering lifecycle."},
+    {"id": "discovery.project", "description": "Discover project truth, constraints, conventions, and unresolved decisions."},
+    {"id": "research.technical", "description": "Investigate technical questions using primary evidence and bounded experiments."},
+    {"id": "modeling.domain", "description": "Build domain vocabulary, invariants, relationships, and scenario-tested models."},
+    {"id": "specification.software", "description": "Produce implementable software specifications with acceptance criteria and non-goals."},
+    {"id": "planning.work-graph", "description": "Decompose work into an acyclic dependency graph with executable frontiers."},
+    {"id": "architecture.software", "description": "Design software boundaries, seams, interfaces, and architecture decisions."},
+    {"id": "implementation.software", "description": "Implement scoped vertical slices that preserve project architecture."},
+    {"id": "testing.software", "description": "Design and execute risk-based software verification and regression protection."},
+    {"id": "debugging.software", "description": "Diagnose defects through reproducible feedback loops and evidence."},
+    {"id": "review.code", "description": "Review code independently against specification and engineering standards."},
+    {"id": "review.security", "description": "Review security boundaries, threats, controls, and evidence."},
+    {"id": "integration.release", "description": "Integrate changes safely through merge, CI, migrations, release, and rollback."},
+    {"id": "continuity.handoff", "description": "Transfer compact, redacted, evidence-linked project context across execution boundaries."},
+    {"id": "design.frontend", "description": "Design and refine intentional frontend interfaces."},
+    {"id": "wordpress.frontend", "description": "Adapt frontend design and implementation to WordPress architecture."},
+    {"id": "accessibility.web", "description": "Design and review web interfaces for accessible operation."},
+    {"id": "responsive.web", "description": "Design and verify responsive web behavior across viewport and content extremes."}
+  ]
+}

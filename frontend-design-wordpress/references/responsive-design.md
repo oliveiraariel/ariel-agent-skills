@@ -132,7 +132,17 @@ WordPress layout may combine:
 - plugin CSS;
 - builder-generated responsive rules.
 
-Recent WordPress/Gutenberg documentation supports responsive Global Styles at named mobile/tablet viewports. Before relying on that capability, detect the project's WordPress/Gutenberg version and current theme strategy. Do not duplicate responsive logic across Global Styles and unrelated CSS unless the project needs a deliberate fallback.
+### WordPress 7.1+
+
+WordPress 7.1 introduced responsive block style states for `@mobile` and `@tablet` in Global Styles and individual block instances. It also introduced configurable top-level `settings.viewport` breakpoints. Core defaults are 480px mobile and 782px tablet unless valid theme settings replace them.
+
+Treat those values as WordPress defaults, **not** as universal design breakpoints. Use them when the site's Global Styles strategy owns responsive block styling; otherwise preserve the project's real responsive system.
+
+### WordPress 7.0 and earlier
+
+Do not generate `@mobile`, `@tablet`, or `settings.viewport` responsive-style instructions as if they were available in core. Use the existing theme/plugin strategy, CSS media queries, container queries, or a compatible Gutenberg feature only when the installed environment actually provides it.
+
+Before relying on version-sensitive WordPress/Gutenberg behavior, detect the target version and theme strategy. Do not duplicate the same responsive rule across Global Styles and unrelated CSS without a deliberate compatibility reason.
 
 ## 13. Minimum responsive verification matrix
 
@@ -148,3 +158,9 @@ When tools permit, verify at least:
 | Dialogs/overlays | fit viewport, focus visible | stable | stable |
 
 Also test long content, empty content, large text, and at least one real interaction state.
+
+## 14. Version-sensitive source
+
+For WordPress 7.1 responsive block styles and configurable viewports, revalidate against:
+
+https://make.wordpress.org/core/2026/08/05/responsive-block-styles-and-configurable-viewports-in-wordpress-7-1/

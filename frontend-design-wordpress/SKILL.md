@@ -1,7 +1,10 @@
 ---
 name: frontend-design-wordpress
-description: Design, implement, review, redesign, and refine frontend interfaces for web applications and WordPress. Use for UI/UX, responsive behavior, accessibility, visual hierarchy, design systems, Gutenberg/block themes, classic themes, plugin-rendered interfaces, page-builder/custom-HTML surfaces, frontend audits, and visual polish. Detect and preserve the project's real stack first; never assume React, Next.js, Tailwind, or any other framework. Treat WCAG 2.2 AA, WordPress conventions, responsive behavior, and the user's product/brand brief as baseline constraints.
+description: Design, build, review, and refine accessible responsive web and WordPress interfaces. Use for UI/UX, themes, Gutenberg, plugin UI, redesigns, and audits.
 license: MIT
+metadata:
+  author: oliveiraariel
+  version: "0.1.0"
 ---
 
 # Frontend Design + WordPress
@@ -13,7 +16,7 @@ Create interfaces that are intentional, usable, responsive, accessible, and nati
 Use this skill for:
 
 - new web pages, application screens, dashboards, forms, navigation, landing pages, and content surfaces;
-- WordPress block themes, classic themes, Gutenberg blocks, plugin-rendered frontend UI, and constrained page-builder/custom-HTML work;
+- WordPress block themes, classic themes, Gutenberg blocks, plugin-rendered frontend UI, plugin admin/settings UI, and constrained page-builder/custom-HTML work;
 - redesigns that must preserve product behavior or brand assets;
 - responsive layout problems;
 - accessibility review and remediation;
@@ -62,7 +65,7 @@ Before proposing implementation details, identify what already exists:
 4. typography, palette, spacing, radii, shadows, icons, and motion patterns;
 5. responsive strategy and existing breakpoints;
 6. accessibility patterns and known constraints;
-7. WordPress mode when applicable: block theme, classic theme, Gutenberg block, plugin frontend, page builder, or custom HTML;
+7. WordPress mode when applicable: block theme, classic theme, Gutenberg block, plugin frontend, plugin admin/settings screen, page builder, or custom HTML;
 8. existing brand assets, content, routes, behaviors, and user flows that must survive the change.
 
 Never introduce a second styling system merely to apply a design improvement. Never replace the framework or WordPress architecture just because another stack is familiar.
@@ -107,7 +110,7 @@ Read `references/responsive-design.md` for implementation rules.
 
 ## 6. Accessibility is a design gate
 
-Target WCAG 2.2 Level AA unless the project specifies a stronger requirement. For WordPress work, follow WordPress accessibility standards as well.
+Target WCAG 2.2 Level AA unless the project specifies a stronger requirement. For WordPress work, use WordPress accessibility guidance as an additional implementation reference where applicable.
 
 At minimum verify:
 
@@ -137,10 +140,11 @@ Core principles:
 - preserve editor/frontend parity for block-based work;
 - use block/theme/plugin conventions appropriate to the existing architecture;
 - enqueue maintainable assets rather than scattering unrelated CSS/JS when project access allows a proper implementation;
-- scope plugin or custom-HTML CSS to avoid contaminating theme/global styles;
+- scope plugin, admin-screen, or custom-HTML CSS to avoid contaminating theme/global/admin styles;
 - do not assume a block theme when the project uses a classic theme, and do not force Gutenberg into a non-Gutenberg surface;
 - keep user-editable content editable unless the brief explicitly calls for hard-coded presentation;
-- follow WordPress escaping, coding, and accessibility conventions when producing WordPress code.
+- for wp-admin surfaces, preserve native admin conventions and load assets only on the screens that own them when feasible;
+- follow WordPress escaping, coding, and accessibility guidance when producing WordPress code.
 
 ## 8. Polish only after structure works
 

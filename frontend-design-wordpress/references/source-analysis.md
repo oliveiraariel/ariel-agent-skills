@@ -2,7 +2,23 @@
 
 Research revalidated: **2026-09-07**.
 
-This skill is an independent synthesis. It does **not** vendor or reproduce the six upstream skills. Their strongest architectural ideas are used as research inputs, and the resulting rules are rewritten for a framework-neutral, WordPress-first-capable frontend workflow.
+This skill is an independent synthesis. It does **not** vendor or reproduce the six upstream skills. Their strongest architectural ideas are used as research inputs, and the resulting rules are independently written for a framework-neutral frontend workflow with a first-class WordPress adapter.
+
+## Validation snapshot
+
+The revalidation used the current default-branch files below. File SHAs are recorded so later reviews can determine whether an upstream source changed after this research pass.
+
+| Source | Observed version/status | File observed | Blob SHA at revalidation |
+|---|---|---|---|
+| Anthropic `frontend-design` | no version field observed | `anthropics/skills/skills/frontend-design/SKILL.md` | `a5333457c414d20d625f307df945842c0952ecc3` |
+| UI/UX Pro Max | manifest `2.13.0` | `nextlevelbuilder/ui-ux-pro-max-skill/.claude/skills/ui-ux-pro-max/SKILL.md` | `41f8e2fd7f8c568228d0b55186ebe3f7b4007377` |
+| make-interfaces-feel-better | no version field observed | `jakubkrehel/make-interfaces-feel-better/skills/make-interfaces-feel-better/SKILL.md` | `e47b87b369396655fa6bea7240c17f108ea494d5` |
+| Vercel `web-design-guidelines` wrapper | `1.0.0` | `vercel-labs/agent-skills/skills/web-design-guidelines/SKILL.md` | `ceae92ab319216a68274168fba9b63b998b65997` |
+| Vercel live guideline source | living ruleset | `vercel-labs/web-interface-guidelines/command.md` | `e1e8e3460db7c1440e34642c4f7b885185ca5366` |
+| Impeccable | `4.2.2` | `pbakaus/impeccable/.github/skills/impeccable/SKILL.md` | `788dac1dcd96581882eb8f7af8c070f1c188022c` |
+| Taste Skill v2 | upstream describes v2 as experimental/actively iterating | `Leonxlnx/taste-skill/skills/taste-skill/SKILL.md` | `b72132fcd466da605623ffe96e370b3991fc5285` |
+
+These SHAs are evidence anchors, not update pins. The skill does not depend on the upstream repositories at runtime.
 
 ## Research objective
 
@@ -15,7 +31,7 @@ The six upstream skills solve different parts of frontend design:
 5. broad design lifecycle/hardening;
 6. high-variance anti-slop design direction.
 
-The gap is that none of them serves as a deep WordPress adapter while remaining equally comfortable with application UI, responsive behavior, and accessibility. `frontend-design-wordpress` is designed to fill that gap.
+The gap is that none of them serves as a deep WordPress adapter while remaining equally comfortable with application UI, responsive behavior, and accessibility. `frontend-design-wordpress` is designed to fill that gap without inheriting a JavaScript framework as its architecture.
 
 ## 1. Anthropic `frontend-design`
 
@@ -23,7 +39,7 @@ The gap is that none of them serves as a deep WordPress adapter while remaining 
 
 - Repository: https://github.com/anthropics/skills
 - Skill: `skills/frontend-design/SKILL.md`
-- License: upstream skill declares separate license terms; current repository copy references `LICENSE.txt` (Apache-2.0 in the skill package at the time of research).
+- License: the current skill package includes `LICENSE.txt`, observed as Apache-2.0 at revalidation.
 
 **What it does especially well**
 
@@ -59,7 +75,7 @@ The gap is that none of them serves as a deep WordPress adapter while remaining 
 
 - Repository: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
 - Skill: `.claude/skills/ui-ux-pro-max/SKILL.md`
-- Current manifest observed: v2.13.0.
+- Manifest observed: v2.13.0.
 - License: MIT.
 - Current manifest explicitly lists OpenClaw among supported platforms.
 
@@ -136,7 +152,7 @@ The gap is that none of them serves as a deep WordPress adapter while remaining 
 - Skill: `skills/web-design-guidelines/SKILL.md`
 - Live rule source: https://github.com/vercel-labs/web-interface-guidelines/blob/main/command.md
 - Wrapper version observed: 1.0.0.
-- License: MIT for the upstream repository/ruleset at research time.
+- License: MIT. The wrapper repository declares MIT in its README and the live rules repository contains an MIT `LICENSE` file at revalidation.
 
 **What it does especially well**
 
@@ -149,7 +165,8 @@ The gap is that none of them serves as a deep WordPress adapter while remaining 
 
 - it is audit-centric, not a full design lifecycle;
 - some content/style rules are product opinions, not accessibility/web standards;
-- framework examples can be React/Tailwind-flavored;
+- some examples are React/Tailwind-flavored;
+- the living ruleset can contain recommendations that should not be mistaken for WCAG requirements;
 - no WordPress ownership/updateability/editor-parity analysis.
 
 **Adopted here**
@@ -178,7 +195,7 @@ The gap is that none of them serves as a deep WordPress adapter while remaining 
 
 - covers the entire frontend lifecycle: shape, build, critique, audit, polish, harden, adapt, optimize, document, extract, and more;
 - explicitly distinguishes refinement from redesign;
-- separates surface intent (marketing/task/content/experience) so the same aesthetic rules are not applied to every UI;
+- separates surface intent so the same aesthetic rules are not applied to every UI;
 - uses durable product/design context documents;
 - performs bounded visual QA instead of endless self-polish;
 - includes production concerns such as edge cases, i18n, accessibility, performance, responsive adaptation, and reusable tokens.
@@ -288,22 +305,49 @@ If an agent runtime can invoke other installed skills, `frontend-design-wordpres
 
 External skills are optional. The core skill must remain functional alone.
 
-## WordPress and standards sources added beyond the six skills
+## WordPress and standards validation
 
-The WordPress specialization is grounded in current primary documentation:
+Primary sources used beyond the six skills:
 
+- WordPress 7.1 release: https://wordpress.org/news/2026/08/wordpress-7-1-mary-lou/
 - Theme Handbook: https://developer.wordpress.org/themes/
 - Block Editor Handbook: https://developer.wordpress.org/block-editor/
 - `theme.json`: https://developer.wordpress.org/themes/global-settings-and-styles/introduction-to-theme-json/
-- Global Settings & Styles: https://developer.wordpress.org/block-editor/how-to-guides/themes/global-settings-and-styles/
+- WordPress 7.1 responsive block styles: https://make.wordpress.org/core/2026/08/05/responsive-block-styles-and-configurable-viewports-in-wordpress-7-1/
 - WordPress Coding Standards: https://developer.wordpress.org/coding-standards/wordpress-coding-standards/
 - WordPress Accessibility Coding Standards: https://developer.wordpress.org/coding-standards/wordpress-coding-standards/accessibility/
 - WCAG 2.2: https://www.w3.org/TR/WCAG22/
 
-At research time WordPress documentation states that new/updated WordPress ecosystem interfaces are expected to meet WCAG 2.2 AA, and current Global Styles documentation includes responsive viewport-specific styling. Version-dependent features must still be checked against the target project before use.
+Validated conclusions:
+
+- WordPress 7.1 was released on 2026-08-19.
+- WordPress 7.1 introduced responsive block style states using `@mobile` and `@tablet`, plus configurable `settings.viewport`; older WordPress core versions must not be assumed to support those APIs.
+- WordPress Accessibility Coding Standards state that code integrated into the official WordPress ecosystem—including core, WordPress.org sites, and official plugins—is expected to conform to WCAG 2.2 AA.
+- This skill applies WCAG 2.2 AA as its own baseline for third-party WordPress work without claiming that official WordPress policy automatically governs every third-party project.
+- WCAG 2.2 AA Target Size (Minimum), SC 2.5.8, is 24 × 24 CSS pixels with defined exceptions/spacing alternatives. A 44 × 44 target is not treated here as the general AA minimum.
+
+## Agent Skills and OpenClaw validation
+
+The bundle was also checked against current Agent Skills/OpenClaw authoring guidance:
+
+- Agent Skills specification: https://agentskills.io/specification
+- OpenClaw Skills: https://docs.openclaw.ai/tools/skills
+- OpenClaw Creating Skills: https://docs.openclaw.ai/tools/creating-skills
+- OpenClaw Skills CLI: https://docs.openclaw.ai/cli/skills
+
+Relevant conclusions:
+
+- Agent Skills requires `SKILL.md` with YAML frontmatter; `name` and `description` are required.
+- Agent Skills requires the `name` to use lowercase letters/numbers/hyphens, remain within 64 characters, and match the parent directory name.
+- Agent Skills allows descriptions up to 1024 characters; OpenClaw's authoring guidance recommends a one-line description under 160 characters for discovery. This project's description follows the stricter OpenClaw recommendation.
+- Agent Skills recommends progressive disclosure, a main `SKILL.md` below 500 lines, and focused one-level references. This bundle follows that structure.
+- OpenClaw follows the Agent Skills format and can discover nested skills in configured skill roots.
+- OpenClaw Git/local installers expect `SKILL.md` at the source root. Because `ariel-agent-skills` is a multi-skill repository, install this skill from its subdirectory locally (or expose the repository as a scanned skill root) rather than assuming the repository root is a single installable skill.
 
 ## Provenance and licensing rule
 
 This repository's skill is MIT-licensed under the repository license. That license covers the independently written material in this repository; it does not relicense upstream projects.
 
-Do not copy upstream skill files into this repository without separately satisfying their licenses and attribution requirements. Prefer linking to upstream projects or installing them as optional external skills.
+Do not copy upstream skill files into this repository without separately satisfying their licenses and attribution/NOTICE requirements where applicable. Prefer linking to upstream projects or installing them as optional external skills.
+
+If future revisions incorporate substantial upstream text or code instead of independent synthesis, update the repository's attribution/licensing documentation before release.

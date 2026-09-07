@@ -1,6 +1,6 @@
 # Design Quality and Visual Direction
 
-This reference translates the strongest recurring ideas from the researched design skills into a framework-neutral, WordPress-aware design process.
+This reference translates recurring ideas from the researched design skills into an independently written, framework-neutral, WordPress-aware design process. Upstream skills inform the analysis; their aesthetic preferences are not treated as standards.
 
 ## 1. Design from the brief, not from the model's habits
 
@@ -125,7 +125,7 @@ Use semantic roles:
 
 Do not use raw brand colors directly in every component if semantic tokens would make states and theming safer.
 
-A muted palette is not automatically professional; a saturated palette is not automatically childish. Judge by product, audience, contrast, and hierarchy.
+A muted palette is not automatically professional; a saturated palette is not automatically childish. Judge by product, audience, contrast, and hierarchy. Accessibility contrast requirements outrank stylistic preferences; use `accessibility.md` when a standards claim is involved.
 
 ## 7. Cards, borders, and surfaces
 
@@ -164,7 +164,7 @@ Avoid:
 - `transition: all`;
 - continuous motion with no product purpose.
 
-Do not impose one fixed duration/scale value globally. Tune to control size, frequency, platform, and interaction purpose.
+Do not impose one fixed duration/scale value globally. Tune to control size, frequency, platform, and interaction purpose. When accessibility conformance is in scope, verify the relevant WCAG motion/flashing requirements rather than treating a design heuristic as the standard.
 
 ## 10. States are part of the design
 

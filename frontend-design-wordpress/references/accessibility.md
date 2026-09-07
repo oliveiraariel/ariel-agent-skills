@@ -2,12 +2,22 @@
 
 Use this checklist as an operational design/development gate. It is not a substitute for a formal accessibility audit or conformance evaluation.
 
-## Standard
+## Standard and evidence hierarchy
 
-Target **WCAG 2.2 Level AA** unless the project explicitly requires a stronger standard. WordPress coding standards likewise expect new and updated WordPress ecosystem interfaces to conform to WCAG 2.2 AA.
+Target **WCAG 2.2 Level AA** unless the project explicitly requires a stronger standard.
 
-Normative source: https://www.w3.org/TR/WCAG22/
-WordPress accessibility standards: https://developer.wordpress.org/coding-standards/wordpress-coding-standards/accessibility/
+- **Normative accessibility source:** WCAG 2.2 — https://www.w3.org/TR/WCAG22/
+- **WordPress implementation guidance:** https://developer.wordpress.org/coding-standards/wordpress-coding-standards/accessibility/
+
+WordPress's Accessibility Coding Standards state that code integrated into the official WordPress ecosystem—including WordPress core, WordPress.org sites, and official plugins—is expected to conform to WCAG 2.2 AA. For third-party WordPress themes, plugins, and sites, this skill still uses WCAG 2.2 AA as its baseline, while treating WordPress guidance as an additional implementation reference rather than implying an official policy applies to every third-party project.
+
+Keep these categories separate:
+
+- **Normative requirement** — traceable to a WCAG success criterion or another standard explicitly required by the project.
+- **Platform guidance** — WordPress or browser/platform conventions that improve implementation quality.
+- **Usability heuristic** — a useful default that is not itself an AA requirement.
+
+Do not present a heuristic as WCAG law.
 
 ## 1. Structure and semantics
 
@@ -60,11 +70,13 @@ WCAG 2.2 adds Level AA requirements such as Focus Not Obscured (Minimum). Do not
 - Preserve readable contrast in dark mode and user-customizable WordPress themes.
 - Treat brand colors as inputs, not exemptions from accessibility.
 
-Use a contrast checker rather than estimating by eye.
+Use a contrast checker rather than estimating by eye. When claiming WCAG conformance, evaluate against the WCAG 2 contrast requirements in force for the target criterion; do not substitute a different contrast model and still call the result WCAG 2.2 AA conformance.
 
 ## 6. Pointer and touch targets
 
-WCAG 2.2 Level AA Target Size (Minimum) uses a **24 × 24 CSS pixel** minimum with defined exceptions and spacing alternatives. For touch-heavy/mobile interfaces, prefer a more comfortable target such as approximately **44 × 44 CSS pixels** when layout permits; this is a usability heuristic, not the WCAG AA minimum.
+WCAG 2.2 Level AA Target Size (Minimum), Success Criterion 2.5.8, uses a **24 × 24 CSS pixel** minimum with defined exceptions, including a spacing alternative for undersized targets.
+
+For touch-heavy/mobile interfaces, prefer a more comfortable target such as approximately **44 × 44 CSS pixels** when layout permits. That is a useful usability target and also relates to the stricter WCAG Target Size (Enhanced) criterion at Level AAA; it is **not** the general WCAG 2.2 AA minimum.
 
 Also verify:
 
@@ -74,7 +86,7 @@ Also verify:
 
 ## 7. Reflow, zoom, and text scaling
 
-- Never disable browser zoom with `user-scalable=no` or equivalent restrictions.
+- Never disable browser zoom with `user-scalable=no`, `maximum-scale=1`, or equivalent restrictions merely to control layout.
 - Content remains usable when text is enlarged.
 - Layout reflows without two-dimensional scrolling for ordinary reading/content use cases, except where two-dimensional layout is essential (for example certain data tables/diagrams).
 - Long translations, large system text, validation messages, and dynamic values do not break controls.
@@ -90,7 +102,7 @@ Also verify:
 
 ## 9. Motion and sensory safety
 
-- Respect `prefers-reduced-motion` for non-essential animation.
+- Respect `prefers-reduced-motion` for non-essential animation as a strong implementation baseline; verify the actual WCAG criteria relevant to moving, blinking, flashing, and interaction-triggered motion when making a conformance claim.
 - Motion is not the only way to communicate a state change.
 - Avoid flashing or visual effects that can trigger photosensitive responses.
 - Prefer user-triggered motion over continuous decorative motion.
@@ -116,6 +128,7 @@ For dashboards, finance/admin tools, and dense application interfaces:
 - Ensure theme color customization cannot silently remove visible focus or contrast.
 - Validate third-party form/plugin markup rather than assuming accessibility.
 - Preserve accessible names when replacing native WordPress controls with custom styling.
+- For wp-admin/plugin settings screens, verify notices, validation, focus, and control semantics after WordPress renders the complete screen.
 
 ## 12. Verification language
 

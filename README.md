@@ -44,7 +44,7 @@ The tree above describes files/directories that actually exist in this repositor
 
 ## Validation
 
-Pull requests and pushes that touch skill files run `.github/workflows/validate-skills.yml`. The workflow discovers bundled `scripts/validate_skill.py` validators and executes each with Python 3.
+The repository contains `.github/workflows/validate-skills.yml`. Once the workflow is present on the base branch, relevant pull requests and pushes to `main` discover bundled `scripts/validate_skill.py` validators and execute each with Python 3. For the first integration PR that introduces the workflow itself, the push to `main` after merge may be the first CI execution.
 
 Each skill may also document runtime-specific validation commands in its own README.
 

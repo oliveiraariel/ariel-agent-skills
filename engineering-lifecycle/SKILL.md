@@ -4,7 +4,7 @@ description: Select and coordinate the minimum evidence-gated engineering flow n
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Engineering Lifecycle
@@ -37,6 +37,8 @@ Examples:
 
 Add a blocking edge only for a real prerequisite. A broad phase label such as “backend” or “frontend” is not by itself a dependency.
 
+When one active worker completes, newly unlocked useful work need not wait for unrelated active workers from the same earlier dispatch. A compatible orchestrator should refill free execution capacity from the recomputed ready frontier while respecting its global concurrency/resource budget.
+
 When parallel results must be reconciled, create an explicit fan-in integration, synthesis, review, or verification Work Unit rather than relying on informal agent-to-agent conversation.
 
 ## Orchestrator integration
@@ -45,12 +47,13 @@ When Adaptive AI Orchestrator or another compatible orchestrator is available, t
 
 - project Work Graph and dependency state;
 - ready-frontier recomputation;
-- logical worker creation and concurrency budget;
+- logical worker creation and bounded concurrency;
+- continuous slot replenishment;
 - claims and duplicate-dispatch prevention;
 - authority/side-effect policy;
 - runtime/session selection;
 - context transfer between accepted dependencies;
-- fan-out/fan-in synchronization;
+- fan-out/fan-in coordination;
 - result evaluation and bounded replanning.
 
 The lifecycle skill must not duplicate those runtime responsibilities.

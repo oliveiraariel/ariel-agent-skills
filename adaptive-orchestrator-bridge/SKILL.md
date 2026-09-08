@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.2.1"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -25,7 +25,7 @@ Choose the Adaptive entrypoint according to the work:
 - **bounded one-Work-Unit task** → normal bridge invocation;
 - **non-trivial project work that can benefit from decomposition, dependencies, multiple specialists, parallel execution, fan-in, or replanning** → add `--multi-agent` so the helper invokes `adaptive-orchestrator orchestrate`.
 
-Do not manually simulate a multiagent plan in this skill. In multi-agent mode the Adaptive engine owns the Work Graph, ready frontier, worker count, skill selection, concurrency, synchronization, evaluation, and bounded replanning.
+Do not manually simulate a multiagent plan in this skill. In multi-agent mode the Adaptive engine owns the Work Graph, ready frontier, worker count, skill selection, concurrency, continuous slot replenishment, evaluation, fan-in, and bounded replanning.
 
 ## Invocation
 
@@ -57,6 +57,8 @@ The helper removes its private `--multi-agent` selector before invoking Adaptive
 
 Adaptive may create multiple independent runtime sessions for ready Work Units and may run 2, 3, 4, 6, or more concurrently up to the configured/policy limit when real dependencies and workspace safety permit. The same configured OpenClaw agent id may own multiple independent worker sessions; role and selected skills specialize each Work Unit.
 
+The project scheduler is continuous rather than barrier-based: when one worker completes and its accepted result unlocks new work, Adaptive may use the newly free slot immediately while unrelated workers from earlier dispatches remain active. The bridge must not wait for or reproduce this scheduling logic itself.
+
 The orchestrator may parallelize any safe combination, including:
 
 - backend + backend;
@@ -66,21 +68,21 @@ The orchestrator may parallelize any safe combination, including:
 
 It must not parallelize merely to maximize worker count. It should prefer the smallest useful ready frontier and minimum skill context required for the objective.
 
-When workers write to the same checkout, multiagent mode relies on declared non-overlapping write scopes. Unknown or overlapping write scopes must be serialized. This bridge must not claim Git worktree/container isolation unless the active runtime actually provides it.
+When workers write to the same checkout, multiagent mode relies on declared literal non-overlapping repository-relative write scopes. Missing, unsafe, unknown or overlapping write scopes are rejected or serialized. This bridge must not claim Git worktree/container isolation unless the active runtime actually provides it.
 
 ## Side effects and authority
 
 For a bounded single-unit task, declare required effects with `--side-effect` and add matching `--allow-side-effect` only when the user's request clearly authorizes them.
 
-For multiagent project work, the planner may create write-capable Work Units. If the user clearly authorized project file edits, pass the relevant project-level allowance, normally:
+For multiagent project work, the planner declares side effects per Work Unit. If the user clearly authorized project file edits, pass only the relevant project-level allowance, normally:
 
 ```text
 --allow-side-effect filesystem.write
 ```
 
-Do not grant unrelated effects. Never infer authorization for destructive operations, credential changes, publication, deployment, external communication, or scope expansion.
+Do not pass the single-unit `--side-effect` flag to project mode. Do not grant unrelated effects. Never infer authorization for destructive operations, credential changes, publication, deployment, external communication, or scope expansion.
 
-Pass `--accept` only for explicit literal acceptance text that a bounded result can actually demonstrate. In project mode, Adaptive normally uses runtime completion as the execution gate and represents semantic verification through dedicated testing/review/integration Work Units.
+Pass `--accept` only for explicit literal acceptance text in bounded single-unit mode. Project mode derives acceptance criteria per Work Unit and normally represents semantic verification through dedicated testing/review/integration Work Units.
 
 ## Result handling
 
@@ -104,7 +106,7 @@ Report the project-level result, especially:
 - completed, blocked, and unfinished Work Units;
 - `max_parallelism_observed`;
 - `replan_count`;
-- wave/frontier summary;
+- dispatch-generation/frontier summary;
 - blockers or human decisions still required.
 
 Do not equate runtime completion with semantic correctness. A project result is strongest when testing/review/integration Work Units also passed.

@@ -16,9 +16,11 @@ This skill does not implement orchestration logic. It delegates to the Adaptive 
 
 This allows portable installations while supporting the common development layout where `ariel-agent-skills` and `adaptive-ai-orchestrator` are sibling repositories.
 
-## Gateway credential
+## Gateway credentials
 
-The skill declares `OPENCLAW_GATEWAY_TOKEN` as its primary environment requirement. Configure the secret through OpenClaw's skill environment / SecretRef mechanism or a trusted host environment. Do not put the token in `SKILL.md`, prompts, shell arguments, or repository files.
+The bridge remains eligible across token, password, and unauthenticated Gateway modes. For token authentication, `OPENCLAW_GATEWAY_TOKEN` is the primary environment variable and can be injected through OpenClaw's per-skill `apiKey` / SecretRef mechanism. Password authentication uses `OPENCLAW_GATEWAY_PASSWORD`.
+
+Do not put Gateway credentials in `SKILL.md`, prompts, shell arguments, or repository files.
 
 ## Example host invocation
 

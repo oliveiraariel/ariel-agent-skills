@@ -4,12 +4,12 @@ description: Select and coordinate the minimum evidence-gated engineering flow n
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Engineering Lifecycle
 
-Use this as the coordinating entry point when the correct engineering path is not already obvious.
+Use this as the coordinating engineering entry point when the correct path is not already obvious.
 
 ## Workflow
 
@@ -18,15 +18,44 @@ Use this as the coordinating entry point when the correct engineering path is no
 3. Resolve material uncertainty with `technical-research`; use `domain-modeling` when vocabulary or invariants are part of the uncertainty.
 4. Require an implementable contract before substantial construction. Use `software-specification` when the acceptance boundary is not already explicit.
 5. For work larger than one safe execution unit, use `work-decomposition` to create an acyclic dependency graph and ready frontier.
-6. Use `software-architecture` for boundary, interface, data-flow, or structural decisions that materially affect multiple work units.
+6. Use `software-architecture` for boundary, interface, data-flow, or structural decisions that materially affect multiple Work Units.
 7. Execute with `implementation`, `testing`, and `debugging` as needed; do not force TDD where another verification loop is stronger.
 8. Review independently. Use `code-review`; add `security-review` when trust boundaries, sensitive data, authorization, external input, dependencies, or deployment risk make it relevant. Add `web-frontend-design` for web UI/UX, responsive, accessibility, visual-design, or frontend-audit scope. When the target uses WordPress, that skill loads its WordPress adapter rather than becoming a separate lifecycle branch.
 9. Use `integration-release` only after the required evidence gates pass.
 10. Use `project-handoff` when work crosses an agent/session boundary.
 
+## Lateral engineering flow
+
+Do not turn the lifecycle into a fixed sequential pipeline when real dependencies permit parallel work.
+
+Examples:
+
+- an approved API/interface contract may unlock backend implementation, frontend client/UI work, contract tests, and documentation at the same time;
+- independent backend modules may proceed in parallel;
+- independent frontend surfaces may proceed in parallel;
+- testing, review, research, or security analysis may share a frontier with implementation when they do not require unfinished outputs.
+
+Add a blocking edge only for a real prerequisite. A broad phase label such as “backend” or “frontend” is not by itself a dependency.
+
+When parallel results must be reconciled, create an explicit fan-in integration, synthesis, review, or verification Work Unit rather than relying on informal agent-to-agent conversation.
+
 ## Orchestrator integration
 
-When Adaptive AI Orchestrator or another compatible orchestrator is available, treat these skills as capabilities selected for Work Units. Let the orchestrator manage dependencies, claims, concurrency, authority policy, runtime selection, and evaluation. The lifecycle skill must not duplicate those runtime responsibilities.
+When Adaptive AI Orchestrator or another compatible orchestrator is available, treat these skills as capabilities selected **per Work Unit**. Let the orchestrator manage:
+
+- project Work Graph and dependency state;
+- ready-frontier recomputation;
+- logical worker creation and concurrency budget;
+- claims and duplicate-dispatch prevention;
+- authority/side-effect policy;
+- runtime/session selection;
+- context transfer between accepted dependencies;
+- fan-out/fan-in synchronization;
+- result evaluation and bounded replanning.
+
+The lifecycle skill must not duplicate those runtime responsibilities.
+
+Prefer the smallest skill set and smallest useful worker frontier that can produce sufficient evidence. More agents are not automatically better; scale worker count only when independent useful work is ready.
 
 ## Completion gate
 

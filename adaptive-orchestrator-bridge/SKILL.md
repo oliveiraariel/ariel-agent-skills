@@ -5,12 +5,9 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.1.0"
+  version: "0.1.1"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
-    requires:
-      env:
-        - OPENCLAW_GATEWAY_TOKEN
 ---
 
 # Adaptive Orchestrator Bridge
@@ -53,8 +50,9 @@ A successful OpenClaw agent call is not sufficient by itself; distinguish runtim
 
 ## Security rules
 
-- Never print, echo, persist, or place `OPENCLAW_GATEWAY_TOKEN` in a prompt or command argument.
-- The token must arrive through OpenClaw's per-skill environment injection or the trusted host environment.
+- Never print, echo, persist, or place Gateway credentials in a prompt or command argument.
+- Token authentication uses `OPENCLAW_GATEWAY_TOKEN`; password authentication uses `OPENCLAW_GATEWAY_PASSWORD`. An unauthenticated local Gateway needs neither.
+- Credentials must arrive through OpenClaw's per-skill environment injection or the trusted host environment.
 - Do not request provider/model overrides unless the user explicitly requires them and Gateway policy authorizes them.
 - Do not edit the Adaptive core to work around a denied execution policy.
 - If the helper reports missing prerequisites, report the missing prerequisite rather than silently bypassing the bridge.

@@ -18,6 +18,7 @@
     {"id": "design.frontend", "description": "Design and refine intentional web frontend interfaces without assuming a specific framework."},
     {"id": "wordpress.frontend", "description": "Adapt web frontend design and implementation to WordPress architecture when WordPress is present."},
     {"id": "accessibility.web", "description": "Design and review web interfaces for accessible operation."},
-    {"id": "responsive.web", "description": "Design and verify responsive web behavior across viewport and content extremes."}
+    {"id": "responsive.web", "description": "Design and verify responsive web behavior across viewport and content extremes."},
+    {"id": "orchestration.invoke", "description": "Invoke an external orchestration engine through a bounded bridge without duplicating its internal coordination logic."}
   ]
 }

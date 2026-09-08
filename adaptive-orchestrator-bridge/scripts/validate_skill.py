@@ -20,6 +20,8 @@ def main() -> None:
         raise SystemExit("bridge must declare the Gateway token environment contract")
     if "thin invocation bridge" not in skill_text.lower():
         raise SystemExit("bridge must explicitly remain thin")
+    if "--multi-agent" not in skill_text or "adaptive-orchestrator orchestrate" not in skill_text:
+        raise SystemExit("bridge must document the Adaptive multiagent project mode")
 
     source = INVOKER.read_text(encoding="utf-8")
     ast.parse(source, filename=str(INVOKER))
@@ -27,6 +29,8 @@ def main() -> None:
         raise SystemExit("bridge invoker must not execute through a shell")
     if "RECURSION_GUARD" not in source or "--constraint" not in source:
         raise SystemExit("bridge invoker must append a recursion-guard constraint")
+    if "MULTI_AGENT_FLAG" not in source or '"orchestrate" if multi_agent else "run"' not in source:
+        raise SystemExit("bridge invoker must route multiagent work to orchestrate")
 
     print("OK: adaptive-orchestrator-bridge contract validated")
 

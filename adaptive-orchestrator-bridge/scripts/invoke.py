@@ -19,6 +19,7 @@ RECURSION_GUARD = (
     "Do not invoke adaptive-orchestrator-bridge or recursively start another "
     "Adaptive orchestration run. Execute only the delegated objective."
 )
+MULTI_AGENT_FLAG = "--multi-agent"
 
 
 def _python_module_command(root: Path) -> list[str] | None:
@@ -62,13 +63,16 @@ def main(argv: list[str] | None = None) -> int:
         print(str(exc), file=sys.stderr)
         return 127
 
-    # The delegated OpenClaw agent can see this bridge skill too. Always add a
-    # runtime constraint so the nested task does not recursively re-enter the
-    # bridge when the user's outer request mentioned Adaptive explicitly.
+    multi_agent = MULTI_AGENT_FLAG in arguments
+    arguments = [argument for argument in arguments if argument != MULTI_AGENT_FLAG]
+    adaptive_command = "orchestrate" if multi_agent else "run"
+
+    # Every delegated OpenClaw worker can see this bridge skill too. Always add a
+    # runtime constraint so a nested task cannot recursively re-enter Adaptive.
     guarded_arguments = [*arguments, "--constraint", RECURSION_GUARD]
 
     completed = subprocess.run(
-        [*command, "run", *guarded_arguments],
+        [*command, adaptive_command, *guarded_arguments],
         check=False,
         env=os.environ.copy(),
     )

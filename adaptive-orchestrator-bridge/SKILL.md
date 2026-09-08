@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.1.1"
+  version: "0.1.2"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -22,7 +22,7 @@ Do not use it merely because the Adaptive repository is readable.
 
 ## Invocation
 
-Invoke the helper at `{baseDir}/scripts/invoke.py` on the host. Pass the user's objective as `--objective` and use `--agent main` unless the user or project context identifies another OpenClaw agent.
+Invoke the helper at `{baseDir}/scripts/invoke.py` on the host. Pass only the actual delegated work as `--objective`; do not include outer instructions such as “use Adaptive” in the nested objective. Use `--agent main` unless the user or project context identifies another OpenClaw agent.
 
 Example:
 
@@ -31,6 +31,8 @@ python3 "{baseDir}/scripts/invoke.py" \
   --objective "Analyze this project and return the next safe engineering step." \
   --agent main
 ```
+
+The helper automatically appends a recursion-guard constraint telling the delegated OpenClaw agent that it is already under Adaptive control and must not invoke this bridge again.
 
 Pass `--accept` only for explicit acceptance text that the result can actually demonstrate. If no semantic acceptance criterion is available, omit it; the Adaptive CLI will validate runtime completion only and the response must say that semantic correctness was not independently proven.
 

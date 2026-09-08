@@ -14,6 +14,13 @@ import sys
 from pathlib import Path
 
 
+RECURSION_GUARD = (
+    "This task is already executing under Adaptive AI Orchestrator control. "
+    "Do not invoke adaptive-orchestrator-bridge or recursively start another "
+    "Adaptive orchestration run. Execute only the delegated objective."
+)
+
+
 def _python_module_command(root: Path) -> list[str] | None:
     python = root / ".venv" / "bin" / "python"
     if python.is_file():
@@ -55,8 +62,13 @@ def main(argv: list[str] | None = None) -> int:
         print(str(exc), file=sys.stderr)
         return 127
 
+    # The delegated OpenClaw agent can see this bridge skill too. Always add a
+    # runtime constraint so the nested task does not recursively re-enter the
+    # bridge when the user's outer request mentioned Adaptive explicitly.
+    guarded_arguments = [*arguments, "--constraint", RECURSION_GUARD]
+
     completed = subprocess.run(
-        [*command, "run", *arguments],
+        [*command, "run", *guarded_arguments],
         check=False,
         env=os.environ.copy(),
     )

@@ -25,6 +25,8 @@ def main() -> None:
     ast.parse(source, filename=str(INVOKER))
     if "shell=True" in source:
         raise SystemExit("bridge invoker must not execute through a shell")
+    if "RECURSION_GUARD" not in source or "--constraint" not in source:
+        raise SystemExit("bridge invoker must append a recursion-guard constraint")
 
     print("OK: adaptive-orchestrator-bridge contract validated")
 

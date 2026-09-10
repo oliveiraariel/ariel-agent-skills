@@ -34,21 +34,22 @@ project-handoff when crossing an execution/session boundary
 
 | Skill | Primary role | Status |
 |---|---|---|
-| [engineering-lifecycle](./engineering-lifecycle/) | Select and coordinate the engineering flow | `0.1.0` |
-| [project-discovery](./project-discovery/) | Understand the real project before planning | `0.1.0` |
-| [technical-research](./technical-research/) | Evidence-backed technical investigation and bounded prototypes | `0.1.0` |
+| [engineering-lifecycle](./engineering-lifecycle/) | Select and coordinate the engineering flow, including terminal obligations and recovery-aware continuity | `0.3.0` |
+| [project-discovery](./project-discovery/) | Understand the real project, repository root, runtime, and environment before planning | `0.2.0` |
+| [technical-research](./technical-research/) | Evidence-backed technical investigation with authority-aware runtime research | `0.2.0` |
 | [domain-modeling](./domain-modeling/) | Vocabulary, invariants, scenarios, and domain decisions | `0.1.0` |
 | [software-specification](./software-specification/) | Turn intent into an implementable contract | `0.1.0` |
-| [work-decomposition](./work-decomposition/) | Build a dependency graph and executable frontier | `0.1.0` |
-| [software-architecture](./software-architecture/) | Boundaries, seams, trade-offs, and ADR-grade decisions | `0.1.0` |
-| [implementation](./implementation/) | Build scoped vertical slices | `0.1.0` |
-| [testing](./testing/) | Risk-based verification and regression protection | `0.1.0` |
-| [debugging](./debugging/) | Reproducible diagnosis and regression-safe fixes | `0.1.0` |
-| [code-review](./code-review/) | Independent spec and standards review | `0.1.0` |
-| [security-review](./security-review/) | Threat- and evidence-driven security review | `0.1.0` |
-| [integration-release](./integration-release/) | Merge, CI, migration, release, and rollback discipline | `0.1.0` |
-| [project-handoff](./project-handoff/) | Compact continuity across agents/sessions | `0.1.0` |
-| [web-frontend-design](./web-frontend-design/) | Framework-neutral web UI/UX, responsive design, accessibility, and optional platform adapters including WordPress | `0.2.0` |
+| [work-decomposition](./work-decomposition/) | Build a dependency graph, executable frontier, remediation work, and bounded replanning | `0.3.0` |
+| [software-architecture](./software-architecture/) | Boundaries, durable state, versioned contracts, correlation, and ADR-grade decisions | `0.2.0` |
+| [implementation](./implementation/) | Build scoped vertical slices and bounded remediations | `0.2.0` |
+| [testing](./testing/) | Risk-based verification, recovery/contract checks, and regression protection | `0.2.0` |
+| [debugging](./debugging/) | Recovery-aware diagnosis, failure classification, and regression-safe fixes | `0.2.0` |
+| [code-review](./code-review/) | Independent spec/standards review bound to the exact code state | `0.2.0` |
+| [security-review](./security-review/) | Threat- and evidence-driven review including observability/privacy boundaries | `0.2.0` |
+| [integration-release](./integration-release/) | Current-HEAD review, CI, merge, post-integration validation, release, and rollback discipline | `0.2.0` |
+| [project-handoff](./project-handoff/) | Recovery-safe continuity across agents/sessions | `0.2.0` |
+| [web-frontend-design](./web-frontend-design/) | Framework-neutral web UI/UX, accessibility, and semantically truthful operational dashboards | `0.3.0` |
+| [adaptive-orchestrator-bridge](./adaptive-orchestrator-bridge/) | Thin OpenClaw → Adaptive invocation bridge that preserves skills and incomplete/recovery state | `0.3.0` |
 
 ### Web frontend scope
 
@@ -58,7 +59,20 @@ project-handoff when crossing an execution/session boundary
 
 - `registry/skills.json` is the portable skill catalog.
 - `registry/capabilities.json` is the capability vocabulary used for orchestration and selection.
-- The registry fields intentionally map to the Adaptive AI Orchestrator `SkillProfile` contract.
+- Registry versions are validated against each skill's frontmatter.
+- Skills that absorbed field learning may publish `execution_profile` and `learned_invariants` metadata. These fields document the responsibility/model-tier intent and the operational rules embedded directly in the corresponding `SKILL.md`; they do not replace the Adaptive runtime's authoritative model-routing policy.
+
+## Field-learning discipline
+
+A lesson is not considered incorporated merely because it appears in a postmortem. Operational learning should be distributed to the smallest correct layer:
+
+- deterministic execution/recovery guarantees → orchestrator/runtime core;
+- role-specific judgment and working rules → the relevant skill;
+- routing/discovery metadata → the machine-readable registry;
+- regression-prone behavior → executable tests;
+- provenance and cross-skill rationale → concise field-learning documentation.
+
+Do not copy every lesson into every skill. Keep each worker's context specialized to the knowledge that benefits its role.
 
 ## Validation
 

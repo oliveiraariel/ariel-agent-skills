@@ -4,7 +4,7 @@ description: Design, build, review, and refine accessible responsive web interfa
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Web Frontend Design
@@ -187,6 +187,20 @@ For implementation or redesign, perform a bounded quality cycle:
 Do not loop indefinitely on subjective polish.
 
 For audits, use `references/audit-checklist.md` and report exact scope, evidence inspected, severity, location, recommendation, verification, and remaining uncertainty.
+
+## 10. Preserve semantic truth in operational UIs
+
+For dashboards, control rooms, monitoring surfaces, workflow visualizations, and other operational interfaces, the UI must represent the real domain/runtime entity rather than relabeling a convenient storage projection.
+
+- Do not call a Work Unit, event, row, or attempt an “Agent” unless the underlying system exposes evidence of a real agent/worker identity.
+- Keep hierarchy explicit when relevant: orchestration/run -> agent/worker instance -> Work Unit -> attempt/event.
+- Distinguish `unknown`, explicit empty/none, legacy missing metadata, running, partial, blocked, failed, and completed states. Do not collapse them into the same label.
+- Group counters and cards by the selected orchestration/run so historical records do not look like concurrently active agents.
+- Durable history must survive refresh/reopen/restart when persistence is part of the product contract; test the reconstructed state, not only in-memory rendering.
+- Long identifiers and state badges must wrap/truncate safely without hiding their semantic meaning; provide details-on-demand rather than clipping required state.
+- Usage/cost displays must distinguish actual, estimated, incomplete, and unknown values. Never silently reuse stale price/cost metadata from an older attempt or model.
+
+These are correctness requirements, not cosmetic polish.
 
 ## Optional specialist delegation
 

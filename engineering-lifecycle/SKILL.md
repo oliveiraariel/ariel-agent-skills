@@ -4,7 +4,7 @@ description: Select and coordinate the minimum evidence-gated engineering flow n
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.1"
+  version: "0.3.0"
 ---
 
 # Engineering Lifecycle
@@ -60,6 +60,21 @@ The lifecycle skill must not duplicate those runtime responsibilities.
 
 Prefer the smallest skill set and smallest useful worker frontier that can produce sufficient evidence. More agents are not automatically better; scale worker count only when independent useful work is ready.
 
+## Learned continuity invariants
+
+Field experience with asynchronous multiagent execution adds these lifecycle rules:
+
+- An intermediate milestone is not terminal completion. Review pending, re-review required, CI pending, merge pending, smoke/acceptance validation pending, an active worker, or required fan-in keeps the objective open.
+- `REQUEST CHANGES` starts a remediation -> verification -> independent re-review loop. Do not stop after applying the requested changes or after tests turn green.
+- A required review is valid only for the exact code state it inspected. If the reviewed HEAD changes materially, the previous verdict is stale and a fresh review is required.
+- If an asynchronous operation appears interrupted, reconcile the existing execution before creating a replacement. Preserve task/run/session identity and avoid duplicate workers or reviewers.
+- A wait/transport timeout is not evidence that the delegated work failed. Distinguish runtime/transport uncertainty from semantic failure and let the orchestrator recover or classify it.
+- `REPLAN_REQUIRED` is a control-flow signal, not a successful stopping point. Necessary discovered work must return to planning and the ready frontier must be recomputed.
+- Testing, review, integration, and post-merge validation are evidence gates. Passing one does not silently waive another.
+- Stop only when the requested outcome is complete or a genuine blocker is explicitly classified with enough state for safe resumption.
+
+For high-responsibility lifecycle planning, governance, architecture, or review decisions, prefer the orchestrator's strongest reasoning tier when model routing is available. Routine execution should remain delegated to the least expensive tier that can satisfy the acceptance contract.
+
 ## Completion gate
 
-The lifecycle is complete when the requested outcome is integrated or intentionally stopped with a documented blocker, required evidence is attached, and the next state is unambiguous.
+The lifecycle is complete only when the requested outcome is integrated or intentionally stopped with a documented blocker, all required terminal obligations are satisfied or explicitly blocked, required evidence is attached, no recoverable asynchronous work remains unaccounted for, and the next state is unambiguous.

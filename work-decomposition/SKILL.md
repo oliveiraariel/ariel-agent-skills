@@ -4,7 +4,7 @@ description: Decompose a specification into independently verifiable work units,
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.1"
+  version: "0.3.0"
 ---
 
 # Work Decomposition
@@ -38,12 +38,23 @@ When the orchestrator supports them, provide or infer:
 
 Do not create a large worker pool merely because concurrency is available. The useful ready frontier should determine worker count. `max_concurrency` is a ceiling, not a target.
 
-## Replanning signal
+## Replanning and remediation
 
 During execution, newly discovered necessary work should be returned to the orchestrator as a planning fact rather than silently expanding the worker's own scope. The orchestrator decides whether to add a new Work Unit, dependency, or human decision and then recomputes the frontier.
 
 A replanning system must not retroactively attach an unsatisfied mandatory prerequisite to work already executing or accepted unless it first establishes a safe governed recovery/reopen transition.
 
+Learned field rules:
+
+- `REPLAN_REQUIRED` means the graph is incomplete, not that the objective is finished. Produce a bounded additive/reopen plan, validate it, and return to the ready frontier.
+- Convert independent review findings into explicit corrective Work Units when that improves ownership, model routing, testing, or traceability. Do not let a coordinator silently absorb substantial implementation work that belongs to a specialist.
+- A corrective Work Unit should point back to the finding/failed acceptance evidence that created it and should unlock re-review only after its required verification passes.
+- Preserve already accepted unrelated Work Units across replanning. Re-run only what the changed dependency or acceptance evidence invalidates.
+- If an execution is interrupted, reconcile existing active/terminal work before creating replacement Work Units. Do not represent duplicate redispatch as new required work.
+- Model post-merge smoke/acceptance validation as real pending work when it is part of the requested completion contract.
+
+Work decomposition and replanning are high-responsibility planning activities; prefer a strong reasoning tier when model routing is available.
+
 ## Completion gate
 
-The graph is ready when every Work Unit is independently understandable and verifiable, required edges are acyclic, real concurrency seams are visible, write/resource conflicts are bounded, required fan-in points are represented, and the executable frontier is unambiguous at every dependency transition.
+The graph is ready when every Work Unit is independently understandable and verifiable, required edges are acyclic, real concurrency seams are visible, write/resource conflicts are bounded, required fan-in and remediation/re-review points are represented, and the executable frontier is unambiguous at every dependency or replan transition.

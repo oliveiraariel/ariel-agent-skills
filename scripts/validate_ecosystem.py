@@ -38,6 +38,37 @@ def field(fm: str, name: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
+def _validate_learning_metadata(skill_id: str, entry: dict) -> None:
+    profile = entry.get("execution_profile")
+    invariants = entry.get("learned_invariants")
+
+    if profile is not None:
+        if not isinstance(profile, dict):
+            fail(f"registry entry {skill_id}.execution_profile must be an object")
+        for key in ("responsibility", "model_tier_hint"):
+            value = profile.get(key)
+            if not isinstance(value, str) or not value.strip():
+                fail(
+                    f"registry entry {skill_id}.execution_profile.{key} "
+                    "must be a non-empty string"
+                )
+
+    if invariants is not None:
+        if (
+            not isinstance(invariants, list)
+            or any(not isinstance(item, str) or not item.strip() for item in invariants)
+        ):
+            fail(f"registry entry {skill_id}.learned_invariants must be non-empty strings")
+        if len(invariants) != len(set(invariants)):
+            fail(f"registry entry {skill_id}.learned_invariants must be unique")
+
+    if profile is not None and not invariants:
+        fail(
+            f"registry entry {skill_id} with execution_profile must publish "
+            "learned_invariants"
+        )
+
+
 def main() -> None:
     skills_doc = load_json(SKILLS_REGISTRY)
     caps_doc = load_json(CAPABILITIES_REGISTRY)
@@ -88,7 +119,8 @@ def main() -> None:
             fail(f"{path.relative_to(ROOT)} needs a meaningful description")
         if not field(fm, "license"):
             fail(f"{path.relative_to(ROOT)} must declare a license")
-        if not field(fm, "version"):
+        frontmatter_version = field(fm, "version")
+        if not frontmatter_version:
             fail(f"{path.relative_to(ROOT)} metadata must declare version")
 
         purpose = entry.get("purpose")
@@ -100,6 +132,13 @@ def main() -> None:
             fail(f"registry entry {skill_id} needs capabilities")
         if not isinstance(version, str) or not version.strip():
             fail(f"registry entry {skill_id} needs version")
+        if version != frontmatter_version:
+            fail(
+                f"registry entry {skill_id} version {version!r} must match "
+                f"frontmatter version {frontmatter_version!r}"
+            )
+
+        _validate_learning_metadata(skill_id, entry)
 
         unknown = set(capabilities) - capability_set
         if unknown:
@@ -124,7 +163,7 @@ def main() -> None:
 
     print(
         f"OK: {len(entries)} skills, {len(capability_set)} capabilities, "
-        "registry and frontmatter contracts validated"
+        "registry, versions, learning metadata, and frontmatter contracts validated"
     )
 
 

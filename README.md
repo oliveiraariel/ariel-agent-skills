@@ -34,22 +34,22 @@ project-handoff when crossing an execution/session boundary
 
 | Skill | Primary role | Status |
 |---|---|---|
-| [engineering-lifecycle](./engineering-lifecycle/) | Select and coordinate the engineering flow, including terminal obligations and recovery-aware continuity | `0.3.0` |
+| [engineering-lifecycle](./engineering-lifecycle/) | Select and coordinate the engineering flow, including terminal obligations and recovery-aware continuity | `0.4.0` |
 | [project-discovery](./project-discovery/) | Understand the real project, repository root, runtime, and environment before planning | `0.2.0` |
 | [technical-research](./technical-research/) | Evidence-backed technical investigation with authority-aware runtime research | `0.2.0` |
 | [domain-modeling](./domain-modeling/) | Vocabulary, invariants, scenarios, and domain decisions | `0.1.0` |
 | [software-specification](./software-specification/) | Turn intent into an implementable contract | `0.1.0` |
-| [work-decomposition](./work-decomposition/) | Build a dependency graph, executable frontier, remediation work, and bounded replanning | `0.3.0` |
+| [work-decomposition](./work-decomposition/) | Build a dependency graph, executable frontier, remediation work, and bounded replanning | `0.4.0` |
 | [software-architecture](./software-architecture/) | Boundaries, durable state, versioned contracts, correlation, and ADR-grade decisions | `0.2.0` |
-| [implementation](./implementation/) | Build scoped vertical slices and bounded remediations | `0.2.0` |
-| [testing](./testing/) | Risk-based verification, recovery/contract checks, and regression protection | `0.2.0` |
-| [debugging](./debugging/) | Recovery-aware diagnosis, failure classification, and regression-safe fixes | `0.2.0` |
+| [implementation](./implementation/) | Build scoped vertical slices and bounded remediations | `0.3.0` |
+| [testing](./testing/) | Risk-based verification, recovery/contract checks, and regression protection | `0.3.0` |
+| [debugging](./debugging/) | Recovery-aware diagnosis, failure classification, and regression-safe fixes | `0.3.0` |
 | [code-review](./code-review/) | Independent spec/standards review bound to the exact code state | `0.2.0` |
 | [security-review](./security-review/) | Threat- and evidence-driven review including observability/privacy boundaries | `0.2.0` |
 | [integration-release](./integration-release/) | Current-HEAD review, CI, merge, post-integration validation, release, and rollback discipline | `0.2.0` |
-| [project-handoff](./project-handoff/) | Recovery-safe continuity across agents/sessions | `0.2.0` |
+| [project-handoff](./project-handoff/) | Recovery-safe continuity across agents/sessions | `0.3.0` |
 | [web-frontend-design](./web-frontend-design/) | Framework-neutral web UI/UX, accessibility, and semantically truthful operational dashboards | `0.3.0` |
-| [adaptive-orchestrator-bridge](./adaptive-orchestrator-bridge/) | Thin OpenClaw → Adaptive invocation bridge that preserves skills and incomplete/recovery state | `0.3.0` |
+| [adaptive-orchestrator-bridge](./adaptive-orchestrator-bridge/) | Thin OpenClaw → Adaptive invocation bridge that preserves skills and incomplete/recovery state | `0.4.0` |
 
 ### Web frontend scope
 
@@ -73,6 +73,10 @@ A lesson is not considered incorporated merely because it appears in a postmorte
 - provenance and cross-skill rationale → concise field-learning documentation.
 
 Do not copy every lesson into every skill. Keep each worker's context specialized to the knowledge that benefits its role.
+
+## Execution-integrity field learning
+
+Operational lessons from the SGFP/OpenClaw/Adaptive sessions on 2026-09-12/13 were distributed to the smallest correct skills instead of creating a duplicate catch-all skill. See [`docs/EXECUTION-INTEGRITY-FIELD-LEARNING-2026-09-13.md`](./docs/EXECUTION-INTEGRITY-FIELD-LEARNING-2026-09-13.md).
 
 ## Validation
 

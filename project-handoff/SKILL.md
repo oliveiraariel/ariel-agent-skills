@@ -4,12 +4,25 @@ description: Compact current project state into a redacted, pointer-based handof
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Project Handoff
 
 Create continuity, not a second copy of the project documentation.
+
+## Current-authority rule
+
+A handoff that preserves history must still expose exactly one unmistakable **current authoritative state** near the top. That block/pointer should include, when relevant:
+
+- active branch and exact HEAD/commit;
+- whether the working tree contains WIP that must be preserved;
+- current stage/lifecycle position;
+- latest verified test/check baseline;
+- active or recoverable execution identifiers;
+- exact next safe action.
+
+Older sections may remain for provenance, but if they contain now-obsolete claims (for example an older HEAD, unavailable tooling that has since been restored, or a stage that has since started), mark them explicitly as historical/non-current. Never leave two sections that both plausibly claim to be the current authority.
 
 ## Include
 

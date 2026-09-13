@@ -4,7 +4,7 @@ description: Select and coordinate the minimum evidence-gated engineering flow n
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Engineering Lifecycle
@@ -74,6 +74,14 @@ Field experience with asynchronous multiagent execution adds these lifecycle rul
 - Stop only when the requested outcome is complete or a genuine blocker is explicitly classified with enough state for safe resumption.
 
 For high-responsibility lifecycle planning, governance, architecture, or review decisions, prefer the orchestrator's strongest reasoning tier when model routing is available. Routine execution should remain delegated to the least expensive tier that can satisfy the acceptance contract.
+
+## Execution-integrity rules
+
+- A worker/runtime ending is not the same as the objective being complete. `PARTIAL`, unmet acceptance criteria, or accepted-with-conditions results must remain open for revision/replanning instead of advancing dependencies as finished work.
+- When an objective contains many independent obligations, require bounded closed Work Units/lots rather than one giant checklist. Each unit should have a finishable acceptance surface and explicit evidence.
+- Missing implementation, wiring, repositories, ports, transactions, or tests already inside the authorized scope are work to complete, not blockers. Reserve blockers for genuine human decisions, missing authority, unavailable environment/runtime, or external prerequisites.
+- Reconcile stale/asynchronous execution state before redispatch. If repeated attempts exhaust the governed retry budget without a usable completion, surface a circuit-breaker state and require a classified recovery/human decision rather than looping indefinitely.
+- Prefer checkable completion evidence: exact tests/checks, before/after counters when meaningful, concrete artifacts, and criterion-to-evidence mapping.
 
 ## Completion gate
 

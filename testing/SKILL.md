@@ -4,7 +4,7 @@ description: Design and execute risk-based software verification with reproducib
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Testing
@@ -19,6 +19,14 @@ Choose the cheapest test layer that can reliably detect the failure being guarde
 4. Exercise important boundaries: invalid input, empty state, concurrency/retry, permissions, error recovery, migration/compatibility, content extremes, process restart, and persistence/reconstruction when relevant.
 5. Make failures reproducible and assertions diagnostic.
 6. Record what was actually run and what remains unverified.
+
+## Evidence and failure classification
+
+- Treat a red suite as evidence of a problem, not automatic proof of a production defect. Classify each failure as production code, test/fixture/double, environment/tooling, runtime/transport, or unresolved before changing the implementation.
+- When the objective is to add coverage, make the delta auditable. Prefer exact test method names plus before/after test/assertion counts when meaningful. If no count changes because an existing test already covers the obligation, identify that test and the assertion/expectation that proves it.
+- A passing subset does not waive missing requested scenarios. Map material acceptance criteria to tests/evidence and keep uncovered items explicit.
+- Repair the test environment before drawing conclusions from a runner that cannot start. Prefer project-local tools/dependencies over assuming global `PATH` state.
+- When a production defect is confirmed, add the smallest regression test that reproduces the causal behavior rather than merely increasing aggregate test count.
 
 ## Learned regression obligations
 

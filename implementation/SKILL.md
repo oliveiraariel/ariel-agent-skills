@@ -4,7 +4,7 @@ description: Implement scoped software work in small vertical slices while prese
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Implementation
@@ -29,6 +29,14 @@ Implement the requested work, not an opportunistic rewrite.
 - Do not treat local tests as a substitute for required independent review, CI, integration, or post-merge acceptance validation.
 - If the current attempt is a remediation/retry after a failed or returned code/test attempt, preserve the prior evidence so the orchestrator can route/escalate appropriately rather than pretending it is a fresh first pass.
 - Prefer clean boundaries, single responsibility, maintainability, and repository conventions; do not satisfy a narrow test by creating hidden coupling or bypassing architecture.
+
+## Completion and blocker discipline
+
+- Finish the delegated acceptance surface before reporting `COMPLETE`. If required items remain, report the result as partial and name the unmet criteria.
+- A missing repository, port, transaction manager, wiring change, fixture, or test that is already authorized by the Work Unit is implementation work, not a blocker. Make the smallest architecture-consistent change and continue.
+- Use a blocker only for a real boundary the worker cannot resolve inside its authority: human decision, missing authority, unavailable environment/runtime, or an external dependency.
+- When a task explicitly asks for coverage, make the evidence checkable: name the exact tests added or reused and report before/after counts when those counts are meaningful. If counts do not change, explain which existing tests satisfy the criterion.
+- Under Adaptive control, honor the orchestrator's structured completion footer and never mark a partial result complete just because local checks are green.
 
 Routine construction should normally use the economical model tier when routing is available. Repeatedly failing, returned, or explicitly remedial code work is a candidate for the code-specialist tier; the worker should not override orchestrator policy itself.
 

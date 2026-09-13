@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.4.0"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -116,8 +116,12 @@ Do not equate runtime completion with semantic correctness. A project result is 
 Learned bridge rules:
 
 - Do not translate `RUNNING`, `PARTIAL`, `BLOCKED`, pending review, or recoverable asynchronous state into a friendly but false “completed” response.
+- A persisted/dashboard `RUNNING` label is not proof of an active worker. When Adaptive exposes current execution/session/run evidence, prefer that evidence over stale historical UI state and surface any mismatch explicitly.
 - If Adaptive returns a recoverable/incomplete state, preserve its orchestration/execution identifiers and state exactly what remains. Do not launch a replacement orchestration from the bridge simply because the caller session is about to end.
 - Recovery/reconciliation belongs to Adaptive core/runtime policy. The bridge may surface the state and invoke an explicitly supported recovery path, but must not invent its own competing scheduler or duplicate workers/reviewers.
+- When Adaptive reports a circuit-breaker/attempt-budget stop, do not silently redispatch the same work. Surface the stop reason and any human-decision requirement.
+- Do not paraphrase worker-reported partial work as completion. If unmet criteria remain, preserve them in the user-visible result.
+- Missing implementation/wiring that is already authorized by the delegated Work Unit is not a bridge-level blocker; let Adaptive/worker continue or return the structured incomplete state.
 - Distinguish model-quality failures from transport/runtime/tool/environment failures in user-visible summaries when Adaptive provides that classification.
 - Do not treat an intermediate gate such as “plan produced”, “tests green”, or “PR merged” as project completion when Adaptive still reports required unfinished work.
 

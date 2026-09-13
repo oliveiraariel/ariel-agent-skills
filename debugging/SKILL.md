@@ -4,7 +4,7 @@ description: Diagnose difficult defects and performance regressions with a repro
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Debugging
@@ -26,6 +26,8 @@ Do not start with the fix. Start with a feedback loop that reliably goes red on 
 ## Learned recovery rules
 
 - A wait timeout means “no terminal result yet” unless the underlying runtime contract explicitly says otherwise. Inspect/reconcile before treating it as task failure.
+- A persisted/dashboard `RUNNING` label is supporting evidence, not proof of an active worker. Prefer current run/session identity, active-run evidence, terminal runtime state, and correlated telemetry when sources disagree.
+- If repeated reconciliation/retry attempts exhaust the governed attempt budget without a usable completion, stop automatic redispatch and surface a circuit-breaker state. Do not manufacture an equivalent third/fourth worker merely to make the symptom disappear.
 - Transport failures such as WebSocket/HTTP/Gateway disconnects, project-local tool lookup failures, or authentication errors must not be counted as LLM-quality failures.
 - Search/history text is supporting evidence. Terminal runtime state and canonical project state remain authoritative when they disagree.
 - When a run is recoverable, preserve its identifiers and retrieve the existing result. Redispatch only after irrecoverability is evidenced.

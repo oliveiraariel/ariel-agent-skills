@@ -4,7 +4,7 @@ description: Decompose a specification into independently verifiable work units,
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Work Decomposition
@@ -25,6 +25,9 @@ Prefer tracer-bullet Work Units that cross enough layers to produce observable v
 10. Add explicit fan-in Work Units when parallel results require integration, synthesis, cross-layer testing, conflict resolution, or review.
 11. Mark human-only or approval-required actions explicitly rather than assigning them to an agent.
 12. Keep units large enough to avoid token-expensive micro-fragmentation but small enough that failure or revision does not invalidate unrelated completed work.
+13. When the input is a long checklist of independent obligations, split it into bounded closed Work Units/lots that a worker can realistically finish and verify in one execution. Do not hide a backlog of unrelated items inside one Work Unit merely to reduce graph size.
+14. Give each bounded unit a checkable completion surface. When testing/coverage is part of the objective, prefer criterion-to-test/evidence mapping and meaningful before/after counters over vague claims such as "coverage added".
+15. Do not model ordinary authorized implementation needs as blockers. Missing wiring, ports, repositories, transactions, or tests belong inside the implementation Work Unit when they are already in scope; reserve blocking/human units for genuine external authority or decision boundaries.
 
 ## Parallel-safety signals
 

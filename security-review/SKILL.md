@@ -4,7 +4,7 @@ description: Review software security through explicit trust boundaries, threat 
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Security Review
@@ -28,6 +28,14 @@ Use project/framework/platform security guidance and version-specific primary so
 - Recovery mechanisms must not broaden privileges or bypass execution policy merely to retrieve a lost result.
 
 Security review is high-responsibility analytical work; prefer the strongest reasoning tier available under orchestrator policy.
+
+## Incident and integrity boundaries
+
+- Content hashes, contract hashes and commit hashes are integrity/provenance identifiers, not credentials or authorization mechanisms.
+- Incident memory must be sanitized. Preserve bounded symptoms, classifications, identifiers and evidence references rather than raw prompts, tokens, credentials, source payloads or unnecessary user data.
+- Permanent learning promotion must not turn a diagnostic artifact into a new secret-retention path.
+- A proactive incident system does not gain extra authority from severity. Research, remediation, external communication, merge and deployment remain subject to their existing policy boundaries.
+- Recovery or reference-based result access must preserve authorization and project ownership boundaries.
 
 ## Output
 

@@ -4,7 +4,7 @@ description: Diagnose difficult defects and performance regressions with a repro
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Debugging
@@ -35,6 +35,15 @@ Do not start with the fix. Start with a feedback loop that reliably goes red on 
 - Record the failure class, causal evidence, affected identifiers, remediation, and regression check so later model-routing or reliability analysis can separate model quality from infrastructure noise.
 
 Root-cause analysis may require a strong reasoning tier when the failure is complex or high-impact. Concrete code remediation after diagnosis is a candidate for the code-specialist tier under orchestrator policy.
+
+## Incident-derived communication-chain rules
+
+- When a producer appears to finish but the consumer sees missing, truncated, malformed, or summarized output, trace producer -> transport -> persistence -> consumer before retrying the work.
+- Distinguish runtime completion from authoritative result verification. A completed runtime with an invalid durable result is first a transport/persistence/integrity problem, not proof of poor model output.
+- Treat observer/wait-process failure separately from worker failure. Preserve execution identity and reconcile the same run before redispatch.
+- When behavior contradicts checked-out source, prove the effective code identity: repository root, cwd, interpreter, virtual environment, import path, and loaded module file are distinct facts.
+- Do not silently coerce machine-contract violations such as integrity numbers encoded as strings. Fix the producer/consumer contract.
+- If the orchestrator exposes an incident identifier, preserve it in evidence and remediation. Report new defect evidence upward; do not close or permanently promote the incident from this Skill.
 
 ## Completion gate
 

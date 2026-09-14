@@ -35,7 +35,7 @@ def _resolve_explicit_root(root: Path) -> tuple[list[str], dict[str, str]]:
         raise RuntimeError(f"Explicit Adaptive root has no src/adaptive_orchestrator: {root}")
     interpreter = os.environ.get("ADAPTIVE_ORCHESTRATOR_PYTHON")
     if interpreter:
-        candidate = Path(interpreter).expanduser().resolve()
+        candidate = Path(os.path.abspath(os.path.expanduser(interpreter)))
     else:
         candidate = root / ".venv" / "bin" / "python"
     if not candidate.is_file() or not os.access(candidate, os.X_OK):
@@ -51,9 +51,8 @@ def _resolve_explicit_root(root: Path) -> tuple[list[str], dict[str, str]]:
 def resolve_command() -> list[str]:
     explicit_root = os.environ.get("ADAPTIVE_ORCHESTRATOR_ROOT")
     if explicit_root:
-        command = _python_module_command(Path(explicit_root).expanduser().resolve())
-        if command is not None:
-            return command
+        command, _ = _resolve_explicit_root(Path(explicit_root).expanduser().resolve())
+        return command
 
     # Common development layout: both repositories are siblings under one Git
     # working directory. This avoids hard-coding a username or localized home path.
@@ -90,11 +89,13 @@ def main(argv: list[str] | None = None) -> int:
         return 127
 
     if diagnose:
-        print(json.dumps({
-            "resolved_code_root": str(Path(environment.get("PYTHONPATH", "").split(os.pathsep)[0]).parent),
-            "resolved_python": command[0],
-            "adaptive_module_path": str(Path(environment.get("PYTHONPATH", "").split(os.pathsep)[0]) / "adaptive_orchestrator" / "__init__.py"),
-        }, sort_keys=True))
+        probe = subprocess.run([command[0], "-c", "import adaptive_orchestrator,sys; import websockets,cryptography; print(__import__('json').dumps({'adaptive_version':getattr(adaptive_orchestrator,'__version__',None),'adaptive_module_path':adaptive_orchestrator.__file__,'python_prefix':sys.prefix,'python_base_prefix':sys.base_prefix,'venv_active':sys.prefix != sys.base_prefix,'gateway_dependencies_available':True}))"], check=False, capture_output=True, text=True, env=environment)
+        if probe.returncode != 0:
+            print(probe.stderr, file=sys.stderr)
+            return probe.returncode
+        payload = json.loads(probe.stdout.strip())
+        payload.update({"resolved_code_root": str(Path(environment["PYTHONPATH"].split(os.pathsep)[0]).parent), "configured_python": os.environ.get("ADAPTIVE_ORCHESTRATOR_PYTHON"), "invoked_python": command[0]})
+        print(json.dumps(payload, sort_keys=True))
         return 0
 
     multi_agent = MULTI_AGENT_FLAG in arguments

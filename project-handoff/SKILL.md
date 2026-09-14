@@ -4,7 +4,7 @@ description: Compact current project state into a redacted, pointer-based handof
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Project Handoff
@@ -45,6 +45,14 @@ Reference specs, ADRs, plans, issues, diffs, and large documents by path or URL 
 - Record whether a review verdict is current or stale relative to HEAD. A successor must not reuse approval from an older code state.
 - Separate model-quality failures from runtime/transport/tool/environment failures so the next agent does not choose the wrong remediation or model escalation.
 - Prefer a resumable checkpoint over vague text such as “continue later”: state exactly what is done, what remains, what must not be repeated, and the next safe action.
+
+## Incident continuity
+
+When Adaptive exposes unresolved incidents, include their safe references in the handoff together with status, pressure/priority when relevant, latest validated evidence, and the next governed action. Do not copy the incident's entire raw timeline into the handoff.
+
+An unresolved incident survives session termination. A successor should reconcile the same incident and any associated execution/result references before creating replacement work.
+
+For large upstream results, preserve authoritative result references rather than duplicating payloads. Keep runtime/execution/result identity together so a future agent can verify and recover the exact artifact.
 
 ## Completion gate
 

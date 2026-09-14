@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.5.0"
+  version: "0.6.0"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -104,6 +104,39 @@ The bridge must preserve this boundary:
 Result integrity metadata and the completion manifest are owned by deterministic Adaptive code. Workers own result content; Adaptive owns final publication verification.
 
 Bridge diagnostics should surface the active worker protocol name/version when Adaptive exposes them so runtime identity can be proven before dispatch.
+
+## Incident signaling boundary
+
+The bridge may transport Adaptive incident status and proactive notifications, but it does not own the incident lifecycle.
+
+- Preserve ADAPTIVE_DEFECT_SIGNAL semantics produced under the Adaptive Worker Protocol; do not reinterpret the signal as a bridge-local failure type.
+- Surface incident identifiers, pressure/action and human-decision boundaries when Adaptive returns them.
+- Do not close, waive, reopen, deduplicate, or permanently promote an incident in the bridge.
+- Do not turn OpenClaw-specific transport symptoms into generic Skills rules directly; Adaptive first validates and promotes reusable knowledge.
+- If Adaptive requests governed external research for an incident, the bridge may expose an authorized runtime/tool path, but research evidence returns to Adaptive for lifecycle handling.
+
+### Human correction forwarding
+
+When the user has to correct the diagnostic direction because Adaptive/OpenClaw
+missed a real failure class or strategy (for example, repeatedly blaming the
+model when transport evidence is the real issue), treat that as potentially
+valuable incident evidence.
+
+When the Adaptive CLI is available, the bridge may forward the bounded,
+non-sensitive correction through:
+
+~~~bash
+adaptive-orchestrator report-intervention \
+  --component "<affected component>" \
+  --symptom "<bounded observable diagnostic gap>" \
+  --correction-type "strategy-correction" \
+  --orchestration-id "<known id>"
+~~~
+
+Do not report ordinary preferences, wording changes, or user disagreement as
+defects. Never include secrets, raw prompts, personal data, chain-of-thought, or
+large source payloads. Adaptive decides recurrence, lifecycle, learning scope
+and promotion.
 
 ## Result and recovery semantics
 

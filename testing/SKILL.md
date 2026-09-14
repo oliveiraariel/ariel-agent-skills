@@ -4,7 +4,7 @@ description: Design and execute risk-based software verification with reproducib
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Testing
@@ -47,6 +47,21 @@ When the affected system is asynchronous, multiagent, event-driven, or stateful,
 A bug that consumed meaningful debugging/recovery effort should normally receive the smallest reliable regression test that would have caught it before release.
 
 Routine test construction/execution may use the economical model tier. Remediation of repeatedly failing code/test behavior is a candidate for the code-specialist tier; high-impact test strategy or acceptance analysis may justify a strong reasoning tier under orchestrator policy.
+
+## Incident-derived transport verification
+
+For machine-result transport and agent handoff regressions, prefer staged proof:
+
+1. SMALL proves the basic end-to-end contract.
+2. MEDIUM targets known representation/transport boundaries.
+3. LARGE proves independence from presentation-size limits.
+4. Reference fan-in proves a downstream worker can consume the verified authoritative artifact without copying the full payload into conversation context.
+
+Stop escalation when an earlier stage fails and diagnose that boundary first.
+
+Also verify that runtime COMPLETED does not satisfy an authoritative-result gate by itself, that malformed integrity metadata fails closed, that observer loss does not trigger duplicate execution, and that reference fan-in begins only after upstream verification.
+
+When a test exposes a meaningful reusable defect, preserve the incident/evidence reference supplied by the orchestrator. Tests provide validation evidence; they do not themselves promote permanent knowledge.
 
 ## Completion gate
 

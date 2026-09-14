@@ -4,7 +4,7 @@ description: Resolve technical uncertainty with primary sources, explicit eviden
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Technical Research
@@ -29,6 +29,19 @@ Use for questions that materially affect architecture, implementation, compatibi
 - Prefer bounded experiments that preserve prior state and avoid contaminating persistent operational logs unless the experiment explicitly targets persistence.
 
 Material research that governs architecture, security, recovery, compatibility, or other high-impact decisions should use a strong reasoning tier when model routing is available.
+
+## Incident-directed external research
+
+Before searching externally for a failure, classify whether the evidence points to model quality, application code, runtime/harness, transport/persistence, provider, environment, authentication, or an unresolved contract. This prevents searching for model fixes when the real failure is infrastructure.
+
+When an active incident explicitly permits external research:
+
+- start with the incident's bounded symptom and existing local evidence;
+- prefer vendor/runtime documentation, official issue trackers, specifications, and upstream source repositories;
+- preserve source/version/date and attach findings as evidence to the incident;
+- treat search findings as evidence, not validated knowledge;
+- use a bounded experiment when authoritative sources remain ambiguous;
+- do not apply remediation outside the Work Unit's authority.
 
 ## Completion gate
 

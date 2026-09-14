@@ -4,7 +4,7 @@ description: Select and coordinate the minimum evidence-gated engineering flow n
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 # Engineering Lifecycle
@@ -82,6 +82,29 @@ For high-responsibility lifecycle planning, governance, architecture, or review 
 - Missing implementation, wiring, repositories, ports, transactions, or tests already inside the authorized scope are work to complete, not blockers. Reserve blockers for genuine human decisions, missing authority, unavailable environment/runtime, or external prerequisites.
 - Reconcile stale/asynchronous execution state before redispatch. If repeated attempts exhaust the governed retry budget without a usable completion, surface a circuit-breaker state and require a classified recovery/human decision rather than looping indefinitely.
 - Prefer checkable completion evidence: exact tests/checks, before/after counters when meaningful, concrete artifacts, and criterion-to-evidence mapping.
+
+## Incident-to-learning lifecycle
+
+A meaningful defect is not finished merely because code changed or a test turned green.
+
+When the orchestrator exposes a governed incident lifecycle, the engineering flow is:
+
+~~~text
+defect detected
+  -> incident preserved
+  -> diagnosis / research / experiment
+  -> root cause
+  -> fix
+  -> validation evidence
+  -> learning disposition
+  -> relevant dissemination
+  -> consistency check
+  -> closure
+~~~
+
+The Skill may help perform stages inside that flow, but the orchestrator owns incident identity, persistence, resolution pressure, permanent knowledge promotion, dissemination and closure.
+
+Runtime COMPLETED is not equivalent to authoritative result verification or objective completion. Likewise, a validated generalizable incident still has a learning obligation until its disposition and required dissemination are complete.
 
 ## Completion gate
 

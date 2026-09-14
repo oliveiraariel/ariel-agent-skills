@@ -4,7 +4,7 @@ description: Design software boundaries, interfaces, seams, data flow, and trade
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Software Architecture
@@ -31,6 +31,14 @@ Prefer deep modules: small stable interfaces hiding meaningful implementation co
 - Observability must remain a safe projection: enough metadata for diagnosis and learning without leaking raw prompts, secrets, credentials, or unnecessary sensitive payloads.
 
 Architecture and cross-boundary contract decisions are high-responsibility work; prefer a strong reasoning tier when model routing is available.
+
+## Incident-derived result and learning boundaries
+
+- Separate control/presentation plane from authoritative result plane. Dispatch, progress, liveness, wait and terminal summaries may be bounded; durable machine results need an explicit authoritative transport.
+- LLM workers own semantic content, not deterministic machine integrity envelopes. The orchestrator/runtime infrastructure should own manifest/finalization metadata, exact byte/hash checks, contract identity and authoritative completion state.
+- Runtime completion and authoritative result verification are different lifecycle states and should be modeled explicitly.
+- Prefer reference-only fan-in for large verified artifacts; a downstream consumer should validate identity/integrity before use.
+- Incident lifecycle and permanent knowledge promotion are orchestration responsibilities. Skills may contribute diagnosis and domain know-how but must not become an alternate incident registry or learning authority.
 
 ## Completion gate
 

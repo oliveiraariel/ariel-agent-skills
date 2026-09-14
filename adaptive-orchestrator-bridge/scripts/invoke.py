@@ -89,7 +89,30 @@ def main(argv: list[str] | None = None) -> int:
         return 127
 
     if diagnose:
-        probe = subprocess.run([command[0], "-c", "import adaptive_orchestrator,sys; import websockets,cryptography; print(__import__('json').dumps({'adaptive_version':getattr(adaptive_orchestrator,'__version__',None),'adaptive_module_path':adaptive_orchestrator.__file__,'python_prefix':sys.prefix,'python_base_prefix':sys.base_prefix,'venv_active':sys.prefix != sys.base_prefix,'gateway_dependencies_available':True}))"], check=False, capture_output=True, text=True, env=environment)
+        probe = subprocess.run(
+            [
+                command[0],
+                "-c",
+                (
+                    "import adaptive_orchestrator,sys; import websockets,cryptography; "
+                    "from application.worker_protocol import PROTOCOL_NAME,PROTOCOL_VERSION; "
+                    "print(__import__('json').dumps({"
+                    "'adaptive_version':getattr(adaptive_orchestrator,'__version__',None),"
+                    "'adaptive_module_path':adaptive_orchestrator.__file__,"
+                    "'python_prefix':sys.prefix,"
+                    "'python_base_prefix':sys.base_prefix,"
+                    "'venv_active':sys.prefix != sys.base_prefix,"
+                    "'gateway_dependencies_available':True,"
+                    "'worker_protocol_name':PROTOCOL_NAME,"
+                    "'worker_protocol_version':PROTOCOL_VERSION"
+                    "}))"
+                ),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
         if probe.returncode != 0:
             print(probe.stderr, file=sys.stderr)
             return probe.returncode

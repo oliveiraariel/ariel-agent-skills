@@ -74,7 +74,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # Every delegated OpenClaw worker can see this bridge skill too. Always add a
     # runtime constraint so a nested task cannot recursively re-enter Adaptive.
-    guarded_arguments = [*arguments, "--constraint", RECURSION_GUARD]
+    guarded_arguments = list(arguments)
+    if adaptive_command != "wait":
+        guarded_arguments.extend(("--constraint", RECURSION_GUARD))
 
     completed = subprocess.run(
         [*command, adaptive_command, *guarded_arguments],

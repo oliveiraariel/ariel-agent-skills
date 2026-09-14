@@ -594,7 +594,8 @@
         "adaptive-owns-incident-lifecycle",
         "bridge-forwards-defect-signals",
         "bridge-cannot-promote-or-close-incidents",
-        "incident-research-returns-to-adaptive"
+        "incident-research-returns-to-adaptive",
+        "meaningful-human-corrections-forward-to-adaptive-incidents"
       ],
       "evidence": [
         "adaptive-orchestrator-bridge/SKILL.md",

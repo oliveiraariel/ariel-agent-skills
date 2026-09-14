@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 import sys
+import json
 from pathlib import Path
 
 
@@ -27,6 +28,24 @@ def _python_module_command(root: Path) -> list[str] | None:
     if python.is_file():
         return [str(python), "-m", "adaptive_orchestrator"]
     return None
+
+def _resolve_explicit_root(root: Path) -> tuple[list[str], dict[str, str]]:
+    source = root / "src" / "adaptive_orchestrator"
+    if not source.is_dir():
+        raise RuntimeError(f"Explicit Adaptive root has no src/adaptive_orchestrator: {root}")
+    interpreter = os.environ.get("ADAPTIVE_ORCHESTRATOR_PYTHON")
+    if interpreter:
+        candidate = Path(interpreter).expanduser().resolve()
+    else:
+        candidate = root / ".venv" / "bin" / "python"
+    if not candidate.is_file() or not os.access(candidate, os.X_OK):
+        raise RuntimeError(
+            "Explicit Adaptive root is not executable: set "
+            "ADAPTIVE_ORCHESTRATOR_PYTHON to an authorized Python interpreter."
+        )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(root / "src") + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    return [str(candidate), "-m", "adaptive_orchestrator"], env
 
 
 def resolve_command() -> list[str]:
@@ -57,11 +76,26 @@ def resolve_command() -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
+    diagnose = "--diagnose" in arguments
+    arguments = [item for item in arguments if item != "--diagnose"]
     try:
-        command = resolve_command()
+        explicit_root = os.environ.get("ADAPTIVE_ORCHESTRATOR_ROOT")
+        if explicit_root:
+            command, environment = _resolve_explicit_root(Path(explicit_root).expanduser().resolve())
+        else:
+            command = resolve_command()
+            environment = os.environ.copy()
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
         return 127
+
+    if diagnose:
+        print(json.dumps({
+            "resolved_code_root": str(Path(environment.get("PYTHONPATH", "").split(os.pathsep)[0]).parent),
+            "resolved_python": command[0],
+            "adaptive_module_path": str(Path(environment.get("PYTHONPATH", "").split(os.pathsep)[0]) / "adaptive_orchestrator" / "__init__.py"),
+        }, sort_keys=True))
+        return 0
 
     multi_agent = MULTI_AGENT_FLAG in arguments
     arguments = [argument for argument in arguments if argument != MULTI_AGENT_FLAG]
@@ -81,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
     completed = subprocess.run(
         [*command, adaptive_command, *guarded_arguments],
         check=False,
-        env=os.environ.copy(),
+        env=environment,
     )
     return completed.returncode
 

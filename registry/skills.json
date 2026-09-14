@@ -540,7 +540,7 @@
       "compatible_runtimes": [
         "openclaw"
       ],
-      "version": "0.4.0",
+      "version": "0.5.0",
       "execution_profile": {
         "responsibility": "runtime-bridge",
         "model_tier_hint": "orchestrator-policy"
@@ -553,7 +553,10 @@
         "active-runtime-state-over-persisted-running",
         "bounded-orphan-retry-circuit-breaker",
         "partial-is-not-terminal",
-        "authorized-remediation-is-not-blocker"
+        "authorized-remediation-is-not-blocker",
+        "adaptive-owns-worker-protocol",
+        "skills-cannot-override-worker-protocol",
+        "bridge-does-not-own-result-integrity"
       ],
       "evidence": [
         "adaptive-orchestrator-bridge/SKILL.md",

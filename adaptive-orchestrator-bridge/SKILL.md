@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.4.0"
+  version: "0.5.0"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -85,6 +85,25 @@ For multiagent project work, the planner declares side effects per Work Unit. If
 Do not pass the single-unit `--side-effect` flag to project mode. Do not grant unrelated effects. Never infer authorization for destructive operations, credential changes, publication, deployment, external communication, or scope expansion.
 
 Pass `--accept` only for explicit literal acceptance text in bounded single-unit mode. Project mode derives acceptance criteria per Work Unit and normally represents semantic verification through dedicated testing/review/integration Work Units.
+
+## Worker protocol boundary
+
+The bridge transports work into Adaptive; it does **not** define worker execution semantics.
+
+Adaptive owns the mandatory **Adaptive Worker Protocol**. That protocol is injected before task-specific content and has precedence over roles, skills, task context, and ordinary worker instructions. Skills may add domain know-how, but they must never redefine result transport, completion, recovery, or integrity semantics.
+
+The bridge must preserve this boundary:
+
+- do not prepend a competing worker protocol;
+- do not rewrite or strip Adaptive's worker protocol envelope;
+- do not teach individual skills to own Result Store transport;
+- do not treat chat/history as authoritative output;
+- do not translate runtime completion into semantic completion when Adaptive has not reached `RESULT_VERIFIED`;
+- do not generate or repair Result Store integrity metadata in the bridge.
+
+Result integrity metadata and the completion manifest are owned by deterministic Adaptive code. Workers own result content; Adaptive owns final publication verification.
+
+Bridge diagnostics should surface the active worker protocol name/version when Adaptive exposes them so runtime identity can be proven before dispatch.
 
 ## Result and recovery semantics
 

@@ -22,6 +22,12 @@ def main() -> None:
         raise SystemExit("bridge must explicitly remain thin")
     if "--multi-agent" not in skill_text or "adaptive-orchestrator orchestrate" not in skill_text:
         raise SystemExit("bridge must document the Adaptive multiagent project mode")
+    if "Adaptive Worker Protocol" not in skill_text:
+        raise SystemExit("bridge must document Adaptive-owned worker protocol semantics")
+    if "Skills may add domain know-how" not in skill_text:
+        raise SystemExit("bridge must state that skills cannot redefine the worker protocol")
+    if "RESULT_VERIFIED" not in skill_text:
+        raise SystemExit("bridge must preserve Adaptive verified-result completion semantics")
 
     source = INVOKER.read_text(encoding="utf-8")
     ast.parse(source, filename=str(INVOKER))
@@ -31,6 +37,8 @@ def main() -> None:
         raise SystemExit("bridge invoker must append a recursion-guard constraint")
     if "MULTI_AGENT_FLAG" not in source or '"orchestrate" if multi_agent else "run"' not in source:
         raise SystemExit("bridge invoker must route multiagent work to orchestrate")
+    if "PROTOCOL_NAME" not in source or "PROTOCOL_VERSION" not in source:
+        raise SystemExit("bridge diagnostics must expose the active Adaptive worker protocol")
 
     print("OK: adaptive-orchestrator-bridge contract validated")
 

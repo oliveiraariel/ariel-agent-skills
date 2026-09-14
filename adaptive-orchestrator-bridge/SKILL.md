@@ -115,6 +115,29 @@ The bridge may transport Adaptive incident status and proactive notifications, b
 - Do not turn OpenClaw-specific transport symptoms into generic Skills rules directly; Adaptive first validates and promotes reusable knowledge.
 - If Adaptive requests governed external research for an incident, the bridge may expose an authorized runtime/tool path, but research evidence returns to Adaptive for lifecycle handling.
 
+### Human correction forwarding
+
+When the user has to correct the diagnostic direction because Adaptive/OpenClaw
+missed a real failure class or strategy (for example, repeatedly blaming the
+model when transport evidence is the real issue), treat that as potentially
+valuable incident evidence.
+
+When the Adaptive CLI is available, the bridge may forward the bounded,
+non-sensitive correction through:
+
+~~~bash
+adaptive-orchestrator report-intervention \
+  --component "<affected component>" \
+  --symptom "<bounded observable diagnostic gap>" \
+  --correction-type "strategy-correction" \
+  --orchestration-id "<known id>"
+~~~
+
+Do not report ordinary preferences, wording changes, or user disagreement as
+defects. Never include secrets, raw prompts, personal data, chain-of-thought, or
+large source payloads. Adaptive decides recurrence, lifecycle, learning scope
+and promotion.
+
 ## Result and recovery semantics
 
 ### Single-unit mode

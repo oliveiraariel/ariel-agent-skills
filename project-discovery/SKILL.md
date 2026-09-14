@@ -4,7 +4,7 @@ description: Discover project truth, constraints, conventions, unresolved decisi
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Project Discovery
@@ -31,6 +31,22 @@ Inspect before interrogating. Prefer evidence already present in the repository,
 - Treat environment/tooling failures separately from model-quality failures so later learning and routing statistics remain meaningful.
 
 For material discovery that determines architecture, governance, recovery, or other high-impact decisions, prefer a strong reasoning tier when model routing is available. Bounded inventory work may use a cheaper tier.
+
+## Runtime identity and incident continuity
+
+When debugging or resuming a runtime-integrated project, record these as distinct identities rather than assuming one implies the others:
+
+- repository/source root;
+- current working directory;
+- configured project root;
+- active interpreter/runtime executable;
+- virtual environment identity;
+- loaded package/module path and version;
+- runtime adapter/session/execution identity.
+
+If environment identity matters, do not dereference a virtual-environment executable and then treat the resolved base interpreter as proof of the active environment.
+
+Also discover active Adaptive incident references when available. An unresolved incident is current project/orchestrator state, not disposable chat history, and should be carried into planning/handoff by reference.
 
 ## Completion gate
 

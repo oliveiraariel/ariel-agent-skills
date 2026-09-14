@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.5.0"
+  version: "0.6.0"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -104,6 +104,16 @@ The bridge must preserve this boundary:
 Result integrity metadata and the completion manifest are owned by deterministic Adaptive code. Workers own result content; Adaptive owns final publication verification.
 
 Bridge diagnostics should surface the active worker protocol name/version when Adaptive exposes them so runtime identity can be proven before dispatch.
+
+## Incident signaling boundary
+
+The bridge may transport Adaptive incident status and proactive notifications, but it does not own the incident lifecycle.
+
+- Preserve ADAPTIVE_DEFECT_SIGNAL semantics produced under the Adaptive Worker Protocol; do not reinterpret the signal as a bridge-local failure type.
+- Surface incident identifiers, pressure/action and human-decision boundaries when Adaptive returns them.
+- Do not close, waive, reopen, deduplicate, or permanently promote an incident in the bridge.
+- Do not turn OpenClaw-specific transport symptoms into generic Skills rules directly; Adaptive first validates and promotes reusable knowledge.
+- If Adaptive requests governed external research for an incident, the bridge may expose an authorized runtime/tool path, but research evidence returns to Adaptive for lifecycle handling.
 
 ## Result and recovery semantics
 

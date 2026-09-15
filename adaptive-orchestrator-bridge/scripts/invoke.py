@@ -21,6 +21,46 @@ RECURSION_GUARD = (
     "Adaptive orchestration run. Execute only the delegated objective."
 )
 MULTI_AGENT_FLAG = "--multi-agent"
+RUNTIME_MODULES = ("adaptive_orchestrator", "jsonschema", "websockets", "cryptography")
+
+
+def _runtime_preflight(command: list[str], environment: dict[str, str]) -> dict[str, object]:
+    """Validate the exact interpreter/environment before starting Adaptive."""
+    if not command or not Path(command[0]).is_file():
+        return {"ok": False, "error": "resolved executable is not a file"}
+    probe = (
+        "import importlib.util, json, site, sys\n"
+        f"modules = {RUNTIME_MODULES!r}\n"
+        "found = {name: (spec.origin if (spec := importlib.util.find_spec(name)) else None) for name in modules}\n"
+        "print(json.dumps({'executable': sys.executable, 'prefix': sys.prefix, "
+        "'base_prefix': sys.base_prefix, 'site_packages': site.getsitepackages(), 'found': found}))\n"
+    )
+    try:
+        result = subprocess.run([command[0], "-c", probe], check=False, capture_output=True, text=True, env=environment)
+    except OSError as exc:
+        return {"ok": False, "error": f"could not start runtime probe: {exc}"}
+    if result.returncode != 0:
+        return {"ok": False, "error": "runtime probe failed"}
+    try:
+        details = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return {"ok": False, "error": "runtime probe returned invalid diagnostics"}
+    missing = [name for name, origin in details.get("found", {}).items() if origin is None]
+    details["ok"] = not missing
+    details["missing"] = missing
+    return details
+
+
+def _print_preflight_failure(details: dict[str, object]) -> int:
+    missing = ", ".join(str(item) for item in details.get("missing", []))
+    print(
+        "BRIDGE_RUNTIME_PREFLIGHT_FAILED: "
+        f"missing dependency: {missing or details.get('error', 'unknown runtime error')}; "
+        f"python={details.get('executable', '<unavailable>')}; "
+        f"prefix={details.get('prefix', '<unavailable>')}",
+        file=sys.stderr,
+    )
+    return 126
 
 
 def _python_module_command(root: Path) -> list[str] | None:
@@ -88,6 +128,10 @@ def main(argv: list[str] | None = None) -> int:
         print(str(exc), file=sys.stderr)
         return 127
 
+    preflight = _runtime_preflight(command, environment)
+    if not preflight.get("ok"):
+        return _print_preflight_failure(preflight)
+
     if diagnose:
         probe = subprocess.run(
             [
@@ -117,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
             print(probe.stderr, file=sys.stderr)
             return probe.returncode
         payload = json.loads(probe.stdout.strip())
-        payload.update({"resolved_code_root": str(Path(environment["PYTHONPATH"].split(os.pathsep)[0]).parent), "configured_python": os.environ.get("ADAPTIVE_ORCHESTRATOR_PYTHON"), "invoked_python": command[0]})
+        payload.update({"resolved_code_root": str(Path(environment["PYTHONPATH"].split(os.pathsep)[0]).parent), "configured_python": os.environ.get("ADAPTIVE_ORCHESTRATOR_PYTHON"), "invoked_python": command[0], "runtime_preflight": preflight})
         print(json.dumps(payload, sort_keys=True))
         return 0
 

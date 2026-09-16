@@ -18,10 +18,7 @@ This allows portable installations while supporting the common development layou
 
 ## Admission versus completion
 
-A successful multiagent Bridge admission means the request crossed the Bridge
-boundary and was accepted for Adaptive orchestration. It does **not** mean the
-project is complete.
-
+A Bridge invocation/correlation id means only that the Bridge started an attempt. For normal multiagent execution, durable Adaptive admission is proven only when a new project checkpoint is materialized (`--plan-only` is exempt).\n\nOnce durable admission is proven, it still does **not** mean the project is complete.\n
 OpenClaw should not report a governed round as finished until Adaptive exposes
 authoritative project-level terminal state. In particular, an `admission_id`,
 allocated orchestration id, successful child-process start, or absence of a

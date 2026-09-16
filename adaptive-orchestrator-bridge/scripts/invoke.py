@@ -13,6 +13,7 @@ import subprocess
 import sys
 import json
 from pathlib import Path
+from uuid import uuid4
 
 
 RECURSION_GUARD = (
@@ -113,6 +114,144 @@ def resolve_command() -> list[str]:
     )
 
 
+def _project_root_from_arguments(arguments: list[str]) -> Path | None:
+    """Return an explicit project root without guessing from cwd."""
+    for index, argument in enumerate(arguments):
+        if argument == "--project-root":
+            if index + 1 >= len(arguments):
+                return None
+            value = arguments[index + 1].strip()
+            return Path(value).expanduser().resolve() if value else None
+        if argument.startswith("--project-root="):
+            value = argument.split("=", 1)[1].strip()
+            return Path(value).expanduser().resolve() if value else None
+    return None
+
+
+def _checkpoint_snapshot(project_root: Path | None) -> frozenset[str]:
+    if project_root is None:
+        return frozenset()
+    directory = project_root / ".adaptive" / "orchestrations"
+    try:
+        return frozenset(
+            str(path.resolve())
+            for path in directory.glob("*.json")
+            if path.is_file()
+        )
+    except OSError:
+        return frozenset()
+
+
+def _emit_admission_event(
+    *,
+    event: str,
+    admission_id: str,
+    attempt: int,
+    adaptive_command: str,
+    returncode: int | None = None,
+    checkpoint_created: bool | None = None,
+    error: str | None = None,
+) -> None:
+    payload: dict[str, object] = {
+        "event": event,
+        "admission_id": admission_id,
+        "attempt": attempt,
+        "adaptive_command": adaptive_command,
+    }
+    if returncode is not None:
+        payload["returncode"] = returncode
+    if checkpoint_created is not None:
+        payload["checkpoint_created"] = checkpoint_created
+    if error:
+        # Error text can include an OS path but must never include the inherited
+        # environment or command-line payload, where credentials could exist.
+        payload["error"] = error
+    print(
+        "BRIDGE_ADMISSION " + json.dumps(payload, sort_keys=True),
+        file=sys.stderr,
+        flush=True,
+    )
+
+
+def _run_adaptive_with_admission_retry(
+    *,
+    command: list[str],
+    adaptive_command: str,
+    guarded_arguments: list[str],
+    environment: dict[str, str],
+) -> int:
+    """Run Adaptive and retry exactly once only before durable admission.
+
+    A project checkpoint is the durable evidence that multi-agent orchestration
+    crossed its admission boundary. A failed child may be retried only when no
+    new checkpoint appeared. This avoids duplicate orchestration after a process
+    already admitted or dispatched work.
+    """
+    admission_id = uuid4().hex
+    project_root = _project_root_from_arguments(guarded_arguments)
+    max_attempts = 2 if adaptive_command == "orchestrate" else 1
+
+    for attempt in range(1, max_attempts + 1):
+        before = _checkpoint_snapshot(project_root)
+        _emit_admission_event(
+            event="start",
+            admission_id=admission_id,
+            attempt=attempt,
+            adaptive_command=adaptive_command,
+        )
+        try:
+            completed = subprocess.run(
+                [*command, adaptive_command, *guarded_arguments],
+                check=False,
+                env=environment,
+            )
+        except OSError as exc:
+            _emit_admission_event(
+                event="launch-error",
+                admission_id=admission_id,
+                attempt=attempt,
+                adaptive_command=adaptive_command,
+                checkpoint_created=False,
+                error=str(exc),
+            )
+            if attempt < max_attempts:
+                continue
+            return 127
+
+        after = _checkpoint_snapshot(project_root)
+        checkpoint_created = bool(after - before)
+        _emit_admission_event(
+            event="exit",
+            admission_id=admission_id,
+            attempt=attempt,
+            adaptive_command=adaptive_command,
+            returncode=completed.returncode,
+            checkpoint_created=checkpoint_created,
+        )
+
+        if completed.returncode == 0:
+            return 0
+
+        safe_pre_admission_failure = (
+            adaptive_command == "orchestrate"
+            and project_root is not None
+            and not checkpoint_created
+        )
+        if safe_pre_admission_failure and attempt < max_attempts:
+            _emit_admission_event(
+                event="retrying-pre-admission-failure",
+                admission_id=admission_id,
+                attempt=attempt,
+                adaptive_command=adaptive_command,
+                returncode=completed.returncode,
+                checkpoint_created=False,
+            )
+            continue
+        return completed.returncode
+
+    return 127
+
+
 def main(argv: list[str] | None = None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
     diagnose = "--diagnose" in arguments
@@ -180,12 +319,12 @@ def main(argv: list[str] | None = None) -> int:
     if adaptive_command != "wait":
         guarded_arguments.extend(("--constraint", RECURSION_GUARD))
 
-    completed = subprocess.run(
-        [*command, adaptive_command, *guarded_arguments],
-        check=False,
-        env=environment,
+    return _run_adaptive_with_admission_retry(
+        command=command,
+        adaptive_command=adaptive_command,
+        guarded_arguments=guarded_arguments,
+        environment=environment,
     )
-    return completed.returncode
 
 
 if __name__ == "__main__":

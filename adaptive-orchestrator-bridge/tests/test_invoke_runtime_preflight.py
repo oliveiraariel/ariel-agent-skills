@@ -72,3 +72,130 @@ def test_preflight_uses_resolved_executable_and_environment(monkeypatch):
     bridge._runtime_preflight([sys.executable, "-m", "adaptive_orchestrator"], environment)
     assert calls[0][0][0] == sys.executable
     assert calls[0][1]["env"] is environment
+
+def test_orchestrate_retries_once_after_proven_pre_admission_failure(
+    monkeypatch, tmp_path, capsys
+):
+    project = tmp_path / "project"
+    project.mkdir()
+    calls = []
+
+    class Completed:
+        def __init__(self, returncode):
+            self.returncode = returncode
+
+    def fake_run(args, **kwargs):
+        calls.append(args)
+        if len(calls) == 1:
+            return Completed(7)
+        checkpoint_dir = project / ".adaptive" / "orchestrations"
+        checkpoint_dir.mkdir(parents=True)
+        (checkpoint_dir / "accepted.json").write_text("{}", encoding="utf-8")
+        return Completed(0)
+
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="orchestrate",
+        guarded_arguments=["--project-root", str(project), "--objective", "test"],
+        environment={},
+    )
+
+    assert result == 0
+    assert len(calls) == 2
+    events = capsys.readouterr().err
+    assert "retrying-pre-admission-failure" in events
+    assert '"checkpoint_created": false' in events
+    assert '"checkpoint_created": true' in events
+
+
+def test_orchestrate_does_not_retry_after_checkpoint_exists(
+    monkeypatch, tmp_path, capsys
+):
+    project = tmp_path / "project"
+    project.mkdir()
+    calls = []
+
+    class Completed:
+        returncode = 9
+
+    def fake_run(args, **kwargs):
+        calls.append(args)
+        checkpoint_dir = project / ".adaptive" / "orchestrations"
+        checkpoint_dir.mkdir(parents=True)
+        (checkpoint_dir / "admitted.json").write_text("{}", encoding="utf-8")
+        return Completed()
+
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="orchestrate",
+        guarded_arguments=["--project-root", str(project), "--objective", "test"],
+        environment={},
+    )
+
+    assert result == 9
+    assert len(calls) == 1
+    events = capsys.readouterr().err
+    assert '"checkpoint_created": true' in events
+    assert "retrying-pre-admission-failure" not in events
+
+
+def test_orchestrate_retries_once_after_child_launch_oserror(
+    monkeypatch, tmp_path, capsys
+):
+    project = tmp_path / "project"
+    project.mkdir()
+    calls = 0
+
+    class Completed:
+        returncode = 0
+
+    def fake_run(args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise OSError("temporary exec failure")
+        return Completed()
+
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="orchestrate",
+        guarded_arguments=["--project-root", str(project), "--objective", "test"],
+        environment={},
+    )
+
+    assert result == 0
+    assert calls == 2
+    events = capsys.readouterr().err
+    assert "launch-error" in events
+    assert "temporary exec failure" in events
+
+
+def test_non_orchestrate_command_never_retries(monkeypatch, tmp_path):
+    calls = 0
+
+    class Completed:
+        returncode = 4
+
+    def fake_run(args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return Completed()
+
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="wait",
+        guarded_arguments=["--project-root", str(tmp_path)],
+        environment={},
+    )
+
+    assert result == 4
+    assert calls == 1
+

@@ -28,6 +28,10 @@ def main() -> None:
         raise SystemExit("bridge must state that skills cannot redefine the worker protocol")
     if "RESULT_VERIFIED" not in skill_text:
         raise SystemExit("bridge must preserve Adaptive verified-result completion semantics")
+    if "Admission is not project completion" not in skill_text:
+        raise SystemExit("bridge must persist the admission-is-not-completion invariant")
+    if "project-level terminal result" not in skill_text:
+        raise SystemExit("bridge must require terminal project evidence before user-visible completion")
 
     source = INVOKER.read_text(encoding="utf-8")
     ast.parse(source, filename=str(INVOKER))

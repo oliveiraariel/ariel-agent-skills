@@ -216,6 +216,9 @@ def test_orchestrate_retries_once_after_child_launch_oserror(
         calls += 1
         if calls == 1:
             raise OSError("temporary exec failure")
+        checkpoint_dir = project / ".adaptive" / "orchestrations"
+        checkpoint_dir.mkdir(parents=True)
+        (checkpoint_dir / "accepted.json").write_text("{}", encoding="utf-8")
         return Completed()
 
     monkeypatch.setattr(bridge.subprocess, "run", fake_run)
@@ -232,6 +235,105 @@ def test_orchestrate_retries_once_after_child_launch_oserror(
     events = capsys.readouterr().err
     assert "launch-error" in events
     assert "temporary exec failure" in events
+
+
+def test_orchestrate_zero_exit_without_checkpoint_retries_once_then_succeeds(
+    monkeypatch, tmp_path, capsys
+):
+    project = tmp_path / "project"
+    project.mkdir()
+    calls = 0
+
+    class Completed:
+        returncode = 0
+
+    def fake_run(args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            checkpoint_dir = project / ".adaptive" / "orchestrations"
+            checkpoint_dir.mkdir(parents=True)
+            (checkpoint_dir / "admitted.json").write_text("{}", encoding="utf-8")
+        return Completed()
+
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="orchestrate",
+        guarded_arguments=["--project-root", str(project), "--objective", "test"],
+        environment={},
+    )
+
+    assert result == 0
+    assert calls == 2
+    events = capsys.readouterr().err
+    assert "retrying-pre-admission-failure" in events
+    assert "exit-with-durable-admission" in events
+    assert '"durable_admission_verified": true' in events
+
+
+def test_orchestrate_zero_exit_without_checkpoint_twice_returns_deterministic_error(
+    monkeypatch, tmp_path, capsys
+):
+    project = tmp_path / "project"
+    project.mkdir()
+    calls = 0
+
+    class Completed:
+        returncode = 0
+
+    def fake_run(args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return Completed()
+
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="orchestrate",
+        guarded_arguments=["--project-root", str(project), "--objective", "test"],
+        environment={},
+    )
+
+    assert result == bridge.DURABLE_ADMISSION_NOT_MATERIALIZED
+    assert calls == 2
+    events = capsys.readouterr().err
+    assert "durable-admission-not-materialized" in events
+    assert '"durable_admission_verified": false' in events
+
+
+def test_plan_only_zero_exit_without_checkpoint_is_valid(monkeypatch, tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    calls = 0
+
+    class Completed:
+        returncode = 0
+
+    def fake_run(args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return Completed()
+
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="orchestrate",
+        guarded_arguments=[
+            "--project-root",
+            str(project),
+            "--plan-only",
+            "--objective",
+            "test",
+        ],
+        environment={},
+    )
+
+    assert result == 0
+    assert calls == 1
 
 
 def test_non_orchestrate_command_never_retries(monkeypatch, tmp_path):

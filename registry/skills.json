@@ -540,7 +540,7 @@
       "compatible_runtimes": [
         "openclaw"
       ],
-      "version": "0.6.0",
+      "version": "0.6.1",
       "execution_profile": {
         "responsibility": "runtime-bridge",
         "model_tier_hint": "orchestrator-policy"
@@ -559,7 +559,9 @@
         "bridge-does-not-own-result-integrity",
         "admission-is-not-completion",
         "terminal-project-result-required-before-conclusion",
-        "authoritative-project-state-before-user-finalization"
+        "authoritative-project-state-before-user-finalization",
+        "bridge-invocation-is-not-durable-admission",
+        "durable-admission-requires-project-checkpoint"
       ],
       "evidence": [
         "adaptive-orchestrator-bridge/SKILL.md",

@@ -1,4 +1,4 @@
-# Bridge admission is not project completion
+# Bridge invocation, durable admission, and project completion are distinct
 
 ## Incident
 
@@ -7,16 +7,7 @@ admission for a new governed multiagent orchestration. The response was then
 phrased as if the round had effectively finished, even though several planned
 workers had not yet completed and some had not started.
 
-The error was conceptual, not transport-level:
-
-```text
-Bridge admission accepted
-!=
-project execution completed
-```
-
-A Bridge admission event proves only that the request crossed the invocation
-boundary and was accepted for orchestration. It does not prove any of the
+The incident revealed two separate boundaries:\n\n```text\nBridge invocation / correlation id\n!=\ndurable Adaptive project admission\n!=\nproject execution completed\n```\n\nA Bridge invocation id is control-plane correlation only. For normal multiagent execution, durable Adaptive admission is proven by a new project checkpoint. `--plan-only` is the intentional exception because it does not create a resumable project.\n\nAfter durable admission, the checkpoint proves that the request crossed the project-admission boundary, but it still does not prove completion. It does not prove any of the
 following:
 
 - all planned Work Units were dispatched;
@@ -32,10 +23,7 @@ following:
 After successful multiagent admission, the controller must keep the state
 classification explicit.
 
-At minimum distinguish:
-
-```text
-ADMITTED
+At minimum distinguish:\n\n```text\nBRIDGE INVOCATION STARTED\nDURABLE PROJECT ADMITTED\n
 DISPATCHED / ACTIVE
 WORK-UNIT COMPLETED
 REVIEW PENDING / RETURNED
@@ -60,8 +48,7 @@ Strong evidence includes:
 
 Weak evidence that must not be treated as completion by itself includes:
 
-- Bridge `admission_id`;
-- child process started successfully;
+- Bridge `admission_id` / invocation id by itself;\n- child process started successfully;
 - orchestration id was allocated;
 - foreground invocation returned;
 - dashboard shows no currently running worker;
@@ -94,11 +81,7 @@ orchestration id and use Adaptive's supported reconciliation/resume mechanisms.
 Do not infer completion from loss of an observer, and do not launch a duplicate
 orchestration merely because the caller session is ending.
 
-## Reusable invariant
-
-```text
-admission is not completion
-```
+## Reusable invariants\n\n```text\nbridge invocation is not durable admission\ndurable admission requires a project checkpoint\nadmission is not completion\n```
 
 The Bridge owns invocation. Adaptive owns project execution and terminal
 semantics.

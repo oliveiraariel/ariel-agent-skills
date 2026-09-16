@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.6.0"
+  version: "0.6.1"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -134,7 +134,7 @@ Do not equate runtime completion with semantic correctness. A project result is 
 
 Learned bridge rules:
 
-- **Admission is not project completion.** A successful Bridge admission event, `admission_id`, child-process start, or orchestration identifier proves only that the request crossed the Bridge admission boundary. It does **not** prove that planned workers started, finished, passed review, reached fan-in, or produced a terminal project result.
+- **Bridge invocation is not durable Adaptive admission.** The Bridge correlation/admission id and child-process startup are control-plane evidence only. For normal multiagent project execution, durable admission is proven by a new Adaptive project checkpoint; `--plan-only` is the intentional exception.\n- **Admission is not project completion.** A successful Bridge admission event, `admission_id`, child-process start, or orchestration identifier proves only that the request crossed the Bridge admission boundary. It does **not** prove that planned workers started, finished, passed review, reached fan-in, or produced a terminal project result.
 - After a multiagent admission succeeds, do not send a user-visible completion/finalization message merely because Bridge invocation returned successfully. Continue observing/reconciling the admitted orchestration until Adaptive returns a project-level terminal result, or explicitly report that the orchestration is still running/incomplete.
 - Before saying a multiagent round is complete, verify authoritative project state from Adaptive checkpoint/result data rather than inferring completion from Bridge success, dashboard cosmetics, elapsed time, or the absence of an active foreground command.
 - If the caller asks whether workers finished, distinguish at least: admission accepted, workers dispatched/active, Work Units completed/accepted, reviews pending/returned, fan-in pending, and project terminal state.

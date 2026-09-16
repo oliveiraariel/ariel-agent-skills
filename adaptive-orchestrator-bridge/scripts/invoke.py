@@ -156,7 +156,10 @@ def _emit_admission_event(
 ) -> None:
     payload: dict[str, object] = {
         "event": event,
+        # Kept for compatibility with existing log consumers. It is a Bridge
+        # invocation correlation id, not proof of durable project admission.
         "admission_id": admission_id,
+        "bridge_invocation_id": admission_id,
         "attempt": attempt,
         "adaptive_command": adaptive_command,
     }

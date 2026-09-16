@@ -10,11 +10,33 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(bridge)
 
 
-def test_runtime_preflight_passes_with_required_modules():
-    root = Path("/home/ariel/Área de trabalho/VSCode/Git/adaptive-ai-orchestrator")
-    result = bridge._runtime_preflight(
-        [str(root / ".venv" / "bin" / "python")], {"PYTHONPATH": str(root / "src")}
+def test_runtime_preflight_passes_with_required_modules(monkeypatch):
+    class Completed:
+        returncode = 0
+        stdout = json.dumps(
+            {
+                "executable": sys.executable,
+                "prefix": sys.prefix,
+                "base_prefix": sys.base_prefix,
+                "site_packages": [],
+                "found": {
+                    name: f"/modules/{name}.py"
+                    for name in bridge.RUNTIME_MODULES
+                },
+            }
+        )
+
+    monkeypatch.setattr(
+        bridge.subprocess,
+        "run",
+        lambda *args, **kwargs: Completed(),
     )
+
+    result = bridge._runtime_preflight(
+        [sys.executable],
+        {"PYTHONPATH": "/adaptive/src"},
+    )
+
     assert result["ok"] is True
     assert set(result["found"]) == set(bridge.RUNTIME_MODULES)
 
@@ -49,12 +71,48 @@ def test_main_does_not_start_adaptive_when_preflight_fails(monkeypatch, capsys):
 
 def test_diagnose_does_not_print_secrets(monkeypatch, capsys):
     command = [sys.executable, "-m", "adaptive_orchestrator"]
-    monkeypatch.setattr(bridge, "_resolve_explicit_root", lambda root: (command, {"PYTHONPATH": "/tmp/src"}))
-    monkeypatch.setattr(bridge, "_runtime_preflight", lambda command, environment: {"ok": True, "found": {name: "/module.py" for name in bridge.RUNTIME_MODULES}})
+    monkeypatch.setattr(
+        bridge,
+        "_resolve_explicit_root",
+        lambda root: (command, {"PYTHONPATH": "/tmp/src"}),
+    )
+    monkeypatch.setattr(
+        bridge,
+        "_runtime_preflight",
+        lambda command, environment: {
+            "ok": True,
+            "found": {name: "/module.py" for name in bridge.RUNTIME_MODULES},
+        },
+    )
+
+    class Completed:
+        returncode = 0
+        stdout = json.dumps(
+            {
+                "adaptive_version": "test",
+                "adaptive_module_path": "/tmp/src/adaptive_orchestrator/__init__.py",
+                "python_prefix": "/tmp/venv",
+                "python_base_prefix": "/usr",
+                "venv_active": True,
+                "gateway_dependencies_available": True,
+                "worker_protocol_name": "adaptive-worker-protocol",
+                "worker_protocol_version": 1,
+            }
+        )
+        stderr = ""
+
+    monkeypatch.setattr(
+        bridge.subprocess,
+        "run",
+        lambda *args, **kwargs: Completed(),
+    )
     monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", "/root")
     monkeypatch.setenv("OPENCLAW_GATEWAY_TOKEN", "secret-token")
+
     assert bridge.main(["--diagnose"]) == 0
-    assert "secret-token" not in capsys.readouterr().out
+    captured = capsys.readouterr()
+    assert "secret-token" not in captured.out
+    assert "secret-token" not in captured.err
 
 
 def test_preflight_uses_resolved_executable_and_environment(monkeypatch):

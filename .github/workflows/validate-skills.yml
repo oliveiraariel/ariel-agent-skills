@@ -39,3 +39,10 @@ jobs:
             echo "Running $validator"
             python3 "$validator"
           done
+
+      - name: Run Adaptive bridge tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check pytest
+          python3 -m pytest adaptive-orchestrator-bridge/tests -q

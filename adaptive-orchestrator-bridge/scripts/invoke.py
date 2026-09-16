@@ -23,6 +23,7 @@ RECURSION_GUARD = (
 )
 MULTI_AGENT_FLAG = "--multi-agent"
 RUNTIME_MODULES = ("adaptive_orchestrator", "jsonschema", "websockets", "cryptography")
+DURABLE_ADMISSION_NOT_MATERIALIZED = 125
 
 
 def _runtime_preflight(command: list[str], environment: dict[str, str]) -> dict[str, object]:
@@ -150,6 +151,7 @@ def _emit_admission_event(
     adaptive_command: str,
     returncode: int | None = None,
     checkpoint_created: bool | None = None,
+    durable_admission_verified: bool | None = None,
     error: str | None = None,
 ) -> None:
     payload: dict[str, object] = {
@@ -162,6 +164,8 @@ def _emit_admission_event(
         payload["returncode"] = returncode
     if checkpoint_created is not None:
         payload["checkpoint_created"] = checkpoint_created
+    if durable_admission_verified is not None:
+        payload["durable_admission_verified"] = durable_admission_verified
     if error:
         # Error text can include an OS path but must never include the inherited
         # environment or command-line payload, where credentials could exist.
@@ -182,22 +186,32 @@ def _run_adaptive_with_admission_retry(
 ) -> int:
     """Run Adaptive and retry exactly once only before durable admission.
 
-    A project checkpoint is the durable evidence that multi-agent orchestration
-    crossed its admission boundary. A failed child may be retried only when no
-    new checkpoint appeared. This avoids duplicate orchestration after a process
-    already admitted or dispatched work.
+    For normal project orchestration with an explicit project root, a new
+    project checkpoint is the durable evidence that Adaptive crossed its
+    admission boundary. Bridge correlation metadata and child-process startup
+    are not admission proof.
+
+    Plan-only mode is intentionally exempt because it does not materialize a
+    resumable project checkpoint.
     """
-    admission_id = uuid4().hex
+    bridge_invocation_id = uuid4().hex
     project_root = _project_root_from_arguments(guarded_arguments)
+    plan_only = "--plan-only" in guarded_arguments
+    requires_durable_checkpoint = (
+        adaptive_command == "orchestrate"
+        and project_root is not None
+        and not plan_only
+    )
     max_attempts = 2 if adaptive_command == "orchestrate" else 1
 
     for attempt in range(1, max_attempts + 1):
         before = _checkpoint_snapshot(project_root)
         _emit_admission_event(
-            event="start",
-            admission_id=admission_id,
+            event="invocation-start",
+            admission_id=bridge_invocation_id,
             attempt=attempt,
             adaptive_command=adaptive_command,
+            durable_admission_verified=False if requires_durable_checkpoint else None,
         )
         try:
             completed = subprocess.run(
@@ -208,10 +222,11 @@ def _run_adaptive_with_admission_retry(
         except OSError as exc:
             _emit_admission_event(
                 event="launch-error",
-                admission_id=admission_id,
+                admission_id=bridge_invocation_id,
                 attempt=attempt,
                 adaptive_command=adaptive_command,
                 checkpoint_created=False,
+                durable_admission_verified=False if requires_durable_checkpoint else None,
                 error=str(exc),
             )
             if attempt < max_attempts:
@@ -220,17 +235,58 @@ def _run_adaptive_with_admission_retry(
 
         after = _checkpoint_snapshot(project_root)
         checkpoint_created = bool(after - before)
+        durable_admission_verified = (
+            checkpoint_created if requires_durable_checkpoint else None
+        )
         _emit_admission_event(
-            event="exit",
-            admission_id=admission_id,
+            event=(
+                "exit-with-durable-admission"
+                if durable_admission_verified is True
+                else "exit-without-durable-admission"
+                if requires_durable_checkpoint
+                else "exit"
+            ),
+            admission_id=bridge_invocation_id,
             attempt=attempt,
             adaptive_command=adaptive_command,
             returncode=completed.returncode,
             checkpoint_created=checkpoint_created,
+            durable_admission_verified=durable_admission_verified,
         )
+
+        if requires_durable_checkpoint and not checkpoint_created:
+            if attempt < max_attempts:
+                _emit_admission_event(
+                    event="retrying-pre-admission-failure",
+                    admission_id=bridge_invocation_id,
+                    attempt=attempt,
+                    adaptive_command=adaptive_command,
+                    returncode=completed.returncode,
+                    checkpoint_created=False,
+                    durable_admission_verified=False,
+                )
+                continue
+            if completed.returncode == 0:
+                _emit_admission_event(
+                    event="durable-admission-not-materialized",
+                    admission_id=bridge_invocation_id,
+                    attempt=attempt,
+                    adaptive_command=adaptive_command,
+                    returncode=DURABLE_ADMISSION_NOT_MATERIALIZED,
+                    checkpoint_created=False,
+                    durable_admission_verified=False,
+                    error="Adaptive exited successfully but created no durable project checkpoint.",
+                )
+                return DURABLE_ADMISSION_NOT_MATERIALIZED
+            return completed.returncode
 
         if completed.returncode == 0:
             return 0
+
+        # Once any new checkpoint exists, never retry automatically: the same
+        # orchestration may already have durable state that must be resumed.
+        if checkpoint_created:
+            return completed.returncode
 
         safe_pre_admission_failure = (
             adaptive_command == "orchestrate"
@@ -240,11 +296,12 @@ def _run_adaptive_with_admission_retry(
         if safe_pre_admission_failure and attempt < max_attempts:
             _emit_admission_event(
                 event="retrying-pre-admission-failure",
-                admission_id=admission_id,
+                admission_id=bridge_invocation_id,
                 attempt=attempt,
                 adaptive_command=adaptive_command,
                 returncode=completed.returncode,
                 checkpoint_created=False,
+                durable_admission_verified=False,
             )
             continue
         return completed.returncode

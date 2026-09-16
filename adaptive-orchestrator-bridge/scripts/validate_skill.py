@@ -28,6 +28,10 @@ def main() -> None:
         raise SystemExit("bridge must state that skills cannot redefine the worker protocol")
     if "RESULT_VERIFIED" not in skill_text:
         raise SystemExit("bridge must preserve Adaptive verified-result completion semantics")
+    if "Bridge invocation is not durable Adaptive admission" not in skill_text:
+        raise SystemExit("bridge must distinguish invocation from durable Adaptive admission")
+    if "durable admission is proven by a new Adaptive project checkpoint" not in skill_text:
+        raise SystemExit("bridge must require a durable checkpoint for project admission proof")
     if "Admission is not project completion" not in skill_text:
         raise SystemExit("bridge must persist the admission-is-not-completion invariant")
     if "project-level terminal result" not in skill_text:

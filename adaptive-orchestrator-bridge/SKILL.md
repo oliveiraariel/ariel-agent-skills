@@ -51,6 +51,12 @@ python3 "{baseDir}/scripts/invoke.py" \
 
 The helper removes its private `--multi-agent` selector before invoking Adaptive and automatically appends a recursion-guard constraint. Each worker delegated by Adaptive is already under orchestrator control and must not invoke this bridge again.
 
+## Observability boundary
+
+Once OpenClaw delegates an authorized project scope to Adaptive, it must not continue executing that same delegated scope through direct shell commands, file writes, package/build steps, tests, or other project mutations outside the admitted Adaptive execution. While the delegation is active, the caller may observe, reconcile, surface status, and report the authoritative Adaptive result, but execution of the delegated scope remains inside Adaptive.
+
+If additional project work becomes necessary after the Adaptive result, delegate that work through the appropriate Adaptive path instead of silently continuing it out of band. A deliberately separate action may stay outside Adaptive only when it is genuinely outside the delegated scope and its observability boundary is made explicit. This prevents the Control Room from showing an Adaptive orchestration as terminal while the caller is still performing the same project task invisibly elsewhere.
+
 ## Multiagent execution semantics
 
 `--multi-agent` means **dynamic logical worker sessions**, not a permanent pool of newly configured OpenClaw agent profiles.
@@ -134,7 +140,9 @@ Do not equate runtime completion with semantic correctness. A project result is 
 
 Learned bridge rules:
 
-- **Bridge invocation is not durable Adaptive admission.** The Bridge correlation/admission id and child-process startup are control-plane evidence only. For normal multiagent project execution, durable admission is proven by a new Adaptive project checkpoint; `--plan-only` is the intentional exception.\n- **Admission is not project completion.** A successful Bridge admission event, `admission_id`, child-process start, or orchestration identifier proves only that the request crossed the Bridge admission boundary. It does **not** prove that planned workers started, finished, passed review, reached fan-in, or produced a terminal project result.
+- **Bridge invocation is not durable Adaptive admission.** The Bridge correlation/admission id and child-process startup are control-plane evidence only. For normal multiagent project execution, durable admission is proven by a new Adaptive project checkpoint; `--plan-only` is the intentional exception.
+- **Admission is not project completion.** A successful Bridge admission event, `admission_id`, child-process start, or orchestration identifier proves only that the request crossed the Bridge admission boundary. It does **not** prove that planned workers started, finished, passed review, reached fan-in, or produced a terminal project result.
+- **Delegation is an execution boundary.** Once project work is admitted to Adaptive, do not perform the same delegated project work out of band in the parent OpenClaw session; observe/reconcile it or delegate a subsequent Work Unit instead.
 - After a multiagent admission succeeds, do not send a user-visible completion/finalization message merely because Bridge invocation returned successfully. Continue observing/reconciling the admitted orchestration until Adaptive returns a project-level terminal result, or explicitly report that the orchestration is still running/incomplete.
 - Before saying a multiagent round is complete, verify authoritative project state from Adaptive checkpoint/result data rather than inferring completion from Bridge success, dashboard cosmetics, elapsed time, or the absence of an active foreground command.
 - If the caller asks whether workers finished, distinguish at least: admission accepted, workers dispatched/active, Work Units completed/accepted, reviews pending/returned, fan-in pending, and project terminal state.

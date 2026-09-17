@@ -4,7 +4,7 @@ description: Integrate validated changes safely through intent-aware conflict re
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.2.0"
 ---
 
 # Integration and Release

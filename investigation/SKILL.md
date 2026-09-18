@@ -4,7 +4,7 @@ description: Analyze persistent incidents and exhausted recovery paths with stro
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Investigation
@@ -106,9 +106,33 @@ Prefer:
 
 Search output is evidence, not automatically validated knowledge.
 
+## Role: Learning Curator
+
+When Adaptive invokes this Skill after a previously unsuccessful Work Unit passes a retest, act as a **Learning Curator**.
+
+This is a read-only analysis role. It does not edit Skills or knowledge files directly. Its job is to analyze the before/after evidence and recommend:
+
+- the actual problem/root cause supported by evidence;
+- the successful remediation;
+- the reusable lesson, if any;
+- the appropriate learning scope;
+- which Adaptive knowledge layer should receive it;
+- which specific Skills, if any, benefit from the lesson;
+- whether the lesson is too local to reuse;
+- concise evidence rationale and confidence.
+
+A successful retest is a learning trigger even when the Work Unit recovered inside ordinary bounded revision and never reached strategy exhaustion. The curator must therefore handle both:
+
+- retest after persistent Investigation / Recovery;
+- retest after ordinary RETURNED / REVISION_REQUIRED correction.
+
+Do not universalize a project-local fact merely because its retest passed. A successful retest validates the remediation in that context, not every possible abstraction of it.
+
+Adaptive core remains authoritative for target filtering, promotion, dissemination, consistency checks and incident closure.
+
 ## Successful retest and learning
 
-A successful retest after investigation is a strong learning trigger.
+A successful retest after investigation or ordinary revision is a strong learning trigger.
 
 When Adaptive confirms that a previously failing/returned/investigated path now satisfies its acceptance evidence, the incident lifecycle should continue into learning rather than silently ending.
 
@@ -132,7 +156,9 @@ Not every lesson belongs in every Skill. Prefer:
 
 Workers propose evidence; Adaptive owns promotion, dissemination, consistency checking, and incident closure.
 
-## Output contract
+## Output contracts
+
+### Recovery Strategist mode
 
 Return structured recovery analysis containing:
 
@@ -151,6 +177,24 @@ Return structured recovery analysis containing:
 - Work Graph guidance;
 - human-decision flag;
 - confidence.
+
+
+
+### Learning Curator mode
+
+Return structured learning analysis containing:
+
+- problem summary;
+- root cause, or an explicit bounded unknown when evidence is insufficient;
+- successful solution summary;
+- one concise learning statement;
+- scope: local, project-specific, runtime/provider-specific, generalizable, architectural, or security-critical;
+- target hints such as Adaptive problem-solving knowledge or selected `skills:<id>`;
+- confidence;
+- whether the lesson should be promoted at all;
+- brief evidence rationale.
+
+Adaptive validates target identifiers and prevents local-only learning from leaking into globally reusable guidance.
 
 Do not hide uncertainty. Do not output private chain-of-thought; return concise evidence and conclusions.
 

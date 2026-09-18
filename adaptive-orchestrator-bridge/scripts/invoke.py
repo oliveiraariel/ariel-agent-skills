@@ -197,20 +197,6 @@ def _watch_durable_admission(
             return
 
 
-def _checkpoint_snapshot(project_root: Path | None) -> frozenset[str]:
-    if project_root is None:
-        return frozenset()
-    directory = project_root / ".adaptive" / "orchestrations"
-    try:
-        return frozenset(
-            str(path.resolve())
-            for path in directory.glob("*.json")
-            if path.is_file()
-        )
-    except OSError:
-        return frozenset()
-
-
 def _emit_admission_event(
     *,
     event: str,

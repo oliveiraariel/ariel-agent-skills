@@ -4,7 +4,7 @@ description: Select and coordinate the minimum evidence-gated engineering flow n
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 # Engineering Lifecycle
@@ -82,6 +82,19 @@ For high-responsibility lifecycle planning, governance, architecture, or review 
 - Missing implementation, wiring, repositories, ports, transactions, or tests already inside the authorized scope are work to complete, not blockers. Reserve blockers for genuine human decisions, missing authority, unavailable environment/runtime, or external prerequisites.
 - Reconcile stale/asynchronous execution state before redispatch. If repeated attempts exhaust the governed retry budget without a usable completion, surface a circuit-breaker state and require a classified recovery/human decision rather than looping indefinitely.
 - Prefer checkable completion evidence: exact tests/checks, before/after counters when meaningful, concrete artifacts, and criterion-to-evidence mapping.
+
+## Persistent incident/recovery lifecycle
+
+When an implementation/review task repeatedly returns or exhausts its normal strategy budget, that does not automatically mean the engineering objective is permanently blocked. Under Adaptive, the core may invoke the high-responsibility `investigation` capability to reanalyze failed paths and return a materially different recovery strategy.
+
+Keep two dimensions explicit:
+
+- **artifact/product readiness** — functional, test, review, integrity and release evidence for the deliverable;
+- **orchestration health/debt** — liveness, historical observability, lease/checkpoint or recovery-control defects in the orchestration infrastructure.
+
+Do not let historical observability debt indefinitely block a technically validated artifact when there is no evidence that the debt invalidates product integrity. Conversely, never use that separation to waive a real functional, security, concurrency, or integrity defect.
+
+A successful retest after a non-trivial investigation is a learning trigger: keep the lifecycle open through learning classification, scoped dissemination, consistency checking, and closure when Adaptive owns that lifecycle.
 
 ## Completion gate
 

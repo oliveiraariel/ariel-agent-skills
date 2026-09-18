@@ -4,7 +4,7 @@ description: Integrate validated changes safely through intent-aware conflict re
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Integration and Release
@@ -86,6 +86,14 @@ A package may be locally ready while real environmental validation remains pendi
 - Runtime release packages should contain runtime requirements, not development residue or secrets.
 - Archive integrity and SHA-256 are required release-artifact evidence when the format supports them.
 - Packaging authority never implies deploy/install/publish authority.
+
+## Artifact readiness versus orchestration debt
+
+Release/retest gating must distinguish defects in the artifact from defects in orchestration observability.
+
+If the exact artifact source has passed its required product gates, authoritative results are intact, and there is no evidence of corruption, unsafe concurrency, stale source identity, or unmet functional/security criteria, a historical Adaptive lease/checkpoint/observability gap may be recorded as a separate infrastructure incident instead of forcing recursive recovery of an otherwise valid artifact.
+
+This separation never waives a gate that can materially affect the artifact. Report both states explicitly, for example `READY_FOR_ENVIRONMENTAL_RETEST` plus an unresolved Adaptive observability incident.
 
 Integration/release decisions are high-responsibility work; prefer a strong reasoning tier when model routing is available.
 

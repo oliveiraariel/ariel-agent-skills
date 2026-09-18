@@ -143,7 +143,31 @@ Additionally verify:
 - alt text behavior for media managed through WordPress;
 - landmark structure across header/main/navigation/footer template parts.
 
-## 11. Source anchors
+## 11. Environmental fault isolation
+
+When a WordPress frontend or login path fails in the real environment, avoid speculative theme/plugin changes before isolating ownership.
+
+A useful diagnostic sequence is:
+
+1. reproduce the smallest stable failing URL or action;
+2. hold the environment constant;
+3. when safe, perform an A/B test with only the suspected plugin/component active versus temporarily disabled;
+4. if the failure follows that component, inspect WordPress/hosting-native PHP/error logs immediately after reproduction;
+5. map the log stack to the exact WordPress hook/API contract before editing;
+6. apply the smallest causal fix and repeat the same environmental test.
+
+WordPress.com/Jetpack layers may intercept anonymous access or authentication before a plugin shortcode/page executes. Distinguish:
+
+- whole-site Coming Soon/privacy interception;
+- WordPress.com/Jetpack SSO;
+- local `wp-login.php` authentication;
+- plugin-owned authorization/provisioning after WordPress authentication.
+
+Do not permanently disable unrelated security features merely to make a test pass.
+
+WordPress hook callbacks must match the native callback contract, including legitimate union/error values. For example, authentication-related filters may pass `WP_Error` during unsuccessful flows; a plugin callback must not narrow the WordPress contract in a way that turns expected error values into PHP type fatals.
+
+## 12. Source anchors
 
 Revalidate implementation details against current official documentation when platform versions matter:
 

@@ -4,7 +4,7 @@ description: Decompose a specification into independently verifiable work units,
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 # Work Decomposition
@@ -57,6 +57,13 @@ Learned field rules:
 - Model post-merge smoke/acceptance validation as real pending work when it is part of the requested completion contract.
 
 Work decomposition and replanning are high-responsibility planning activities; prefer a strong reasoning tier when model routing is available.
+
+## Recovery-graph integrity
+
+- A corrective/recovery Work Unit is a prerequisite when its result is needed to make the original returned unit executable again: model the required edge as `new-remediation -> original-returned-unit`.
+- When a corrective child satisfies the exact finding that returned its parent/original unit, make that reconciliation explicit in the graph/evaluation state so an already-satisfied correction cannot leave the original permanently stranded.
+- Strategy exhaustion should preserve the original Work Unit identity and history. Prefer adding a bounded diagnostic/remediation prerequisite or another materially different path over manufacturing a duplicate replacement objective.
+- A Recovery Strategist may propose a graph delta, but only the orchestrator admits dependencies and dispatches new work.
 
 ## Completion gate
 

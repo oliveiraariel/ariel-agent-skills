@@ -4,7 +4,7 @@ description: Design software boundaries, interfaces, seams, data flow, and trade
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Software Architecture
@@ -29,6 +29,18 @@ Prefer deep modules: small stable interfaces hiding meaningful implementation co
 - Distinguish logical domain/UI entities from storage/event projection keys. Renaming a Work Unit card to “Agent” does not create an agent identity; model the real identity if the product promises it.
 - Define authoritative state and reconstruction rules so refresh, browser reopen, or service restart does not lose durable history.
 - Observability must remain a safe projection: enough metadata for diagnosis and learning without leaking raw prompts, secrets, credentials, or unnecessary sensitive payloads.
+
+## Recovery and liveness identity
+
+For recoverable orchestration, model these as separate facts rather than one generic "running" state:
+
+- controller/launcher liveness;
+- worker/execution liveness;
+- Work Unit progress/semantic state.
+
+When a system must suppress duplicate recovery, correlate orchestration id, Work Unit id, execution/external id, worker/session identity, lease, and heartbeat. A process PID or controller heartbeat by itself is not a sufficient worker lease.
+
+Recovery/observability event vocabularies are public contracts between producer and consumers. New lifecycle events such as recovered-worker, recovery-analysis, pause, or learning events must be accepted/versioned across the event boundary before deployment; an observer must not crash merely because the producer emitted a legitimate recovery event.
 
 Architecture and cross-boundary contract decisions are high-responsibility work; prefer a strong reasoning tier when model routing is available.
 

@@ -19,7 +19,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.4.0",
+      "version": "0.5.0",
       "execution_profile": {
         "responsibility": "high",
         "model_tier_hint": "strong"
@@ -32,7 +32,9 @@
         "partial-is-not-terminal",
         "authorized-remediation-is-not-blocker",
         "bounded-orphan-retry-circuit-breaker",
-        "completion-evidence-must-be-checkable"
+        "completion-evidence-must-be-checkable",
+        "separate-artifact-readiness-from-orchestration-debt",
+        "successful-retest-triggers-learning"
       ],
       "evidence": [
         "engineering-lifecycle/SKILL.md"
@@ -175,7 +177,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.4.0",
+      "version": "0.5.0",
       "execution_profile": {
         "responsibility": "high",
         "model_tier_hint": "strong"
@@ -187,7 +189,9 @@
         "post-merge-validation-is-real-work",
         "split-large-checklists-into-closed-units",
         "authorized-remediation-is-not-blocker",
-        "completion-evidence-must-be-checkable"
+        "completion-evidence-must-be-checkable",
+        "recovery-prerequisite-points-to-original",
+        "corrective-child-reconciles-original"
       ],
       "evidence": [
         "work-decomposition/SKILL.md"
@@ -212,7 +216,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.2.0",
+      "version": "0.3.0",
       "execution_profile": {
         "responsibility": "high",
         "model_tier_hint": "strong"
@@ -221,7 +225,10 @@
         "version-producer-consumer-contracts",
         "durable-authoritative-state",
         "correlation-is-architecture",
-        "ui-entity-must-match-domain-identity"
+        "ui-entity-must-match-domain-identity",
+        "controller-worker-progress-are-separate",
+        "correlated-worker-proof-of-life",
+        "recovery-event-contract-versioning"
       ],
       "evidence": [
         "software-architecture/SKILL.md"
@@ -283,7 +290,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.3.0",
+      "version": "0.4.0",
       "execution_profile": {
         "responsibility": "routine",
         "model_tier_hint": "economy-first-code-specialist-on-remediation"
@@ -296,7 +303,11 @@
         "regress-event-contracts",
         "classify-test-vs-production-vs-environment",
         "completion-evidence-must-be-checkable",
-        "coverage-delta-or-exact-existing-test"
+        "coverage-delta-or-exact-existing-test",
+        "regress-correlated-liveness-truth",
+        "regress-worker-recovered-event",
+        "regress-corrective-child-reconciliation",
+        "regress-successful-retest-learning"
       ],
       "evidence": [
         "testing/SKILL.md"
@@ -322,7 +333,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.3.0",
+      "version": "0.4.0",
       "execution_profile": {
         "responsibility": "adaptive",
         "model_tier_hint": "strong-diagnosis-code-specialist-remediation"
@@ -333,7 +344,10 @@
         "timeout-is-not-semantic-failure",
         "fix-contract-not-symptom",
         "active-runtime-state-over-persisted-running",
-        "bounded-orphan-retry-circuit-breaker"
+        "bounded-orphan-retry-circuit-breaker",
+        "authoritative-operational-state-over-conversation",
+        "correlated-worker-proof-of-life",
+        "component-ab-isolation-native-logs"
       ],
       "evidence": [
         "debugging/SKILL.md"
@@ -429,7 +443,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.2.0",
+      "version": "0.3.0",
       "execution_profile": {
         "responsibility": "high",
         "model_tier_hint": "strong"
@@ -438,7 +452,8 @@
         "current-head-review-required",
         "gates-do-not-waive-each-other",
         "merge-is-not-terminal-if-smoke-remains",
-        "reconcile-asynchronous-gates"
+        "reconcile-asynchronous-gates",
+        "separate-artifact-readiness-from-orchestration-debt"
       ],
       "evidence": [
         "integration-release/SKILL.md"
@@ -540,7 +555,7 @@
       "compatible_runtimes": [
         "openclaw"
       ],
-      "version": "0.6.1",
+      "version": "0.7.0",
       "execution_profile": {
         "responsibility": "runtime-bridge",
         "model_tier_hint": "orchestrator-policy"
@@ -561,7 +576,11 @@
         "terminal-project-result-required-before-conclusion",
         "authoritative-project-state-before-user-finalization",
         "bridge-invocation-is-not-durable-admission",
-        "durable-admission-requires-project-checkpoint"
+        "durable-admission-requires-project-checkpoint",
+        "authoritative-operational-state-over-conversation",
+        "launcher-is-not-worker-proof",
+        "persistent-recovery-owned-by-adaptive-core",
+        "pause-resume-preserves-orchestration"
       ],
       "evidence": [
         "adaptive-orchestrator-bridge/SKILL.md",

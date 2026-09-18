@@ -4,10 +4,19 @@ description: Analyze persistent incidents and exhausted recovery paths with stro
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # Investigation
+
+## Canonical Recovery Loop terminology
+
+**Recovery Loop** is the canonical conversational short name for the **Adaptive Persistent Recovery & Learning Lifecycle**.
+
+When a user or owner asks about “the Recovery Loop”, interpret it as the complete Adaptive subsystem coordinated by the Orchestrator for persistent problem resolution and automatic learning. It includes ordinary retrabalho/retest handling, Recovery Strategist analysis when strategies exhaust, recovery epochs, corrective reconciliation, developer pause/resume, successful-retest Learning Curator analysis, scoped knowledge incorporation, dissemination, consistency checking, and lifecycle closure.
+
+Do **not** interpret “Recovery Loop” as a request to start a local retry loop or as authority for this Skill to dispatch work. The Orchestrator remains authoritative and activates the subsystem proactively when execution evidence requires it.
+
 
 Use this Skill for difficult defects, repeated returned work, strategy exhaustion, contradictory operational evidence, unresolved incidents, or improvement investigations where ordinary retry is no longer enough.
 

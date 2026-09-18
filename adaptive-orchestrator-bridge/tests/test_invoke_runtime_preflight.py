@@ -677,3 +677,69 @@ def test_bridge_final_line_carries_authoritative_terminal_state(
     assert payload["status"] == "COMPLETED"
     assert payload["returncode"] == 0
     assert payload["orchestration_id"]
+
+
+
+def test_bridge_requires_explicit_execution_mode(monkeypatch, capsys):
+    command = [sys.executable, "-m", "adaptive_orchestrator"]
+    monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", "/root")
+    monkeypatch.setattr(
+        bridge,
+        "_resolve_explicit_root",
+        lambda root: (command, {"PYTHONPATH": "/adaptive/src"}),
+    )
+    monkeypatch.setattr(
+        bridge,
+        "_runtime_preflight",
+        lambda command, environment: {
+            "ok": True,
+            "found": {name: "/module.py" for name in bridge.RUNTIME_MODULES},
+        },
+    )
+    monkeypatch.setattr(
+        bridge,
+        "_run_adaptive_with_admission_retry",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("bridge must refuse before launching Adaptive")
+        ),
+    )
+
+    assert bridge.main(["--objective", "test"]) == 2
+    assert "BRIDGE_EXECUTION_MODE_REQUIRED" in capsys.readouterr().err
+
+
+def test_bridge_routes_explicit_single_unit(monkeypatch):
+    command = [sys.executable, "-m", "adaptive_orchestrator"]
+    captured = {}
+
+    monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", "/root")
+    monkeypatch.setattr(
+        bridge,
+        "_resolve_explicit_root",
+        lambda root: (command, {"PYTHONPATH": "/adaptive/src"}),
+    )
+    monkeypatch.setattr(
+        bridge,
+        "_runtime_preflight",
+        lambda command, environment: {
+            "ok": True,
+            "found": {name: "/module.py" for name in bridge.RUNTIME_MODULES},
+        },
+    )
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+        return 0
+
+    monkeypatch.setattr(
+        bridge,
+        "_run_adaptive_with_admission_retry",
+        fake_run,
+    )
+
+    assert bridge.main(
+        ["--single-unit", "--objective", "write one handoff"]
+    ) == 0
+    assert captured["adaptive_command"] == "run"
+    assert bridge.SINGLE_UNIT_FLAG not in captured["guarded_arguments"]
+    assert "--constraint" in captured["guarded_arguments"]

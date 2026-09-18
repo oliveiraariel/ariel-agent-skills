@@ -568,6 +568,48 @@
         "adaptive-orchestrator-bridge/scripts/invoke.py",
         "adaptive-orchestrator-bridge/references/admission-vs-completion.md"
       ]
+    },
+    {
+      "id": "investigation",
+      "purpose": "Analyze persistent incidents, repeated returns, and strategy exhaustion with strong evidence-grounded reasoning; generate materially different candidate solution paths and return recovery guidance to the orchestrator.",
+      "capabilities": [
+        "investigation.recovery-strategy"
+      ],
+      "inputs": [
+        "incident/recovery evidence",
+        "attempt history",
+        "current authoritative state",
+        "relevant learned knowledge"
+      ],
+      "outputs": [
+        "structured recovery analysis",
+        "candidate solution paths",
+        "recommended path",
+        "work-graph guidance",
+        "verification targets"
+      ],
+      "dependencies": [],
+      "compatible_agents": [],
+      "compatible_models": [],
+      "compatible_runtimes": [],
+      "version": "0.1.0",
+      "execution_profile": {
+        "responsibility": "high",
+        "model_tier_hint": "strong"
+      },
+      "learned_invariants": [
+        "authoritative-operational-state-over-conversation",
+        "correlated-worker-proof-of-life",
+        "previous-path-history-required",
+        "materially-different-recovery-path",
+        "analyst-does-not-dispatch",
+        "investigation-returns-to-orchestrator",
+        "successful-retest-triggers-learning",
+        "learning-distribution-is-scoped"
+      ],
+      "evidence": [
+        "investigation/SKILL.md"
+      ]
     }
   ]
 }

@@ -56,6 +56,36 @@ def _runtime_preflight(command: list[str], environment: dict[str, str]) -> dict[
     return details
 
 
+def _resolved_code_root(
+    *,
+    command: list[str],
+    environment: dict[str, str],
+    preflight: dict[str, object],
+) -> str | None:
+    found = preflight.get("found")
+    if isinstance(found, dict):
+        module_path = found.get("adaptive_orchestrator")
+        if isinstance(module_path, str) and module_path:
+            path = Path(module_path).expanduser().resolve()
+            # .../<repo>/src/adaptive_orchestrator/__init__.py -> <repo>
+            if len(path.parents) >= 3:
+                return str(path.parents[2])
+
+    pythonpath = environment.get("PYTHONPATH")
+    if pythonpath:
+        first = pythonpath.split(os.pathsep)[0].strip()
+        if first:
+            return str(Path(first).expanduser().resolve().parent)
+
+    if command:
+        executable = Path(command[0]).expanduser().resolve()
+        # .../<repo>/.venv/bin/python -> <repo>
+        if executable.parent.name == "bin" and executable.parent.parent.name == ".venv":
+            return str(executable.parent.parent.parent)
+
+    return None
+
+
 def _print_preflight_failure(details: dict[str, object]) -> int:
     missing = ", ".join(str(item) for item in details.get("missing", []))
     print(
@@ -632,7 +662,18 @@ def main(argv: list[str] | None = None) -> int:
             print(probe.stderr, file=sys.stderr)
             return probe.returncode
         payload = json.loads(probe.stdout.strip())
-        payload.update({"resolved_code_root": str(Path(environment["PYTHONPATH"].split(os.pathsep)[0]).parent), "configured_python": os.environ.get("ADAPTIVE_ORCHESTRATOR_PYTHON"), "invoked_python": command[0], "runtime_preflight": preflight})
+        payload.update(
+            {
+                "resolved_code_root": _resolved_code_root(
+                    command=command,
+                    environment=environment,
+                    preflight=preflight,
+                ),
+                "configured_python": os.environ.get("ADAPTIVE_ORCHESTRATOR_PYTHON"),
+                "invoked_python": command[0],
+                "runtime_preflight": preflight,
+            }
+        )
         print(json.dumps(payload, sort_keys=True))
         return 0
 

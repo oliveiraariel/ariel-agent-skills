@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.8.0"
+  version: "0.9.0"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -162,6 +162,8 @@ For OpenClaw-facing conversation, **Recovery Loop** means the complete **Adaptiv
 
 A normal task does not require the user to say “use the Recovery Loop”. In ordinary project execution the Orchestrator may activate Recovery Loop behavior proactively when retrabalho, strategy exhaustion, recovery, retest, or learning conditions are detected.
 
+Project-mode Adaptive execution starts a detached per-orchestration supervisor guardian by default. If the launching OpenClaw/tool session disappears after durable admission, that is not a reason to ask the user for a direct fallback or to abandon the objective: the guardian reconciles controller liveness and resumes the same Adaptive orchestration when needed. Completion of one recovery attempt is not closure of the Recovery Loop; closure follows the original objective or a governed terminal stop.
+
 Questions such as “o Recovery Loop foi acionado?”, “em que etapa está o Recovery Loop?”, “o que ele aprendeu?” or “pause/retome o Recovery Loop” refer to the state of that Adaptive lifecycle. The bridge must surface the authoritative Adaptive state and must not emulate a conversational retry loop locally.
 
 ## Persistent recovery boundary
@@ -171,6 +173,8 @@ When Adaptive enables persistent investigation/recovery, the bridge remains a tr
 - Do not treat an earlier OpenClaw/chat statement that a worker is active as authoritative. Reconcile the current Adaptive checkpoint/Result Store and correlated runtime liveness evidence.
 - A launcher PID or controller process is not sufficient proof of an active worker.
 - Do not start a replacement recovery from the bridge merely because a Work Unit is `RETURNED`, `RECOVERY_REQUIRED`, or `BLOCKED` by strategy exhaustion. Adaptive core decides whether to invoke the Recovery Strategist, replan, and dispatch.
+- After durable project admission, do not ask the user to authorize an out-of-band fallback merely because the caller/controller ended or an intermediate observation is stale. Reconcile the same orchestration first; Adaptive's per-orchestration guardian is the normal persistence path.
+- The bridge may invoke Adaptive's supported `resume-project` and `supervise-projects` commands when explicit reconciliation is needed. These commands operate on existing durable state and must never be translated into a fresh replacement orchestration.
 - When the developer requests pause, preserve the orchestration id and use Adaptive's supported pause/resume path rather than abandoning the execution narrative.
 - Learning promotion after a successful retest belongs to Adaptive incident/learning lifecycle; the bridge may report it but must not rewrite Skills or knowledge independently.
 

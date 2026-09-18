@@ -592,26 +592,31 @@
       "id": "investigation",
       "purpose": "Analyze persistent incidents, repeated returns, and strategy exhaustion with strong evidence-grounded reasoning; generate materially different candidate solution paths and return recovery guidance to the orchestrator.",
       "capabilities": [
-        "investigation.recovery-strategy"
+        "investigation.recovery-strategy",
+        "investigation.learning-analysis"
       ],
       "inputs": [
         "incident/recovery evidence",
         "attempt history",
         "current authoritative state",
-        "relevant learned knowledge"
+        "relevant learned knowledge",
+        "successful retest before/after evidence",
+        "validation references"
       ],
       "outputs": [
         "structured recovery analysis",
         "candidate solution paths",
         "recommended path",
         "work-graph guidance",
-        "verification targets"
+        "verification targets",
+        "structured learning analysis",
+        "learning scope and Skill target hints"
       ],
       "dependencies": [],
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.1.0",
+      "version": "0.2.0",
       "execution_profile": {
         "responsibility": "high",
         "model_tier_hint": "strong"
@@ -624,7 +629,10 @@
         "analyst-does-not-dispatch",
         "investigation-returns-to-orchestrator",
         "successful-retest-triggers-learning",
-        "learning-distribution-is-scoped"
+        "learning-distribution-is-scoped",
+        "every-successful-retest-is-learning-trigger",
+        "local-learning-must-not-leak-globally",
+        "learning-curator-does-not-mutate-knowledge"
       ],
       "evidence": [
         "investigation/SKILL.md"

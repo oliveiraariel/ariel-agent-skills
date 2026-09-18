@@ -4,7 +4,7 @@ description: Design and execute risk-based software verification with reproducib
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Testing
@@ -43,6 +43,16 @@ When the affected system is asynchronous, multiagent, event-driven, or stateful,
 - transient transport failures and reconnection behavior;
 - environment resolution such as project-local virtualenv/tool binaries instead of assuming global `PATH`;
 - privacy boundaries for observability: prompts, secrets, tokens, and sensitive payloads must not appear in operational event streams unless explicitly designed and authorized.
+
+Additional regression cases for persistent investigation/recovery include:
+
+- conversational state says a worker is active while correlated persisted liveness says it is not;
+- a launcher/PID exists without a valid correlated worker lease/heartbeat;
+- a legitimate `worker_recovered` or other new lifecycle event crosses the observability boundary without crashing the consumer;
+- an accepted corrective child formally unblocks/reconciles the original returned Work Unit;
+- exhausted strategy paths cause materially new recovery analysis rather than an equivalent blind retry;
+- developer pause stops new dispatch while preserving resumable state and an exact stop report;
+- a successful recovery retest triggers the learning lifecycle and records scoped dissemination obligations.
 
 A bug that consumed meaningful debugging/recovery effort should normally receive the smallest reliable regression test that would have caught it before release.
 

@@ -7,11 +7,13 @@ inherited process environment supplied by OpenClaw or the trusted host.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import shutil
 import subprocess
 import sys
-import json
+import threading
 from pathlib import Path
 from uuid import uuid4
 
@@ -24,6 +26,7 @@ RECURSION_GUARD = (
 MULTI_AGENT_FLAG = "--multi-agent"
 RUNTIME_MODULES = ("adaptive_orchestrator", "jsonschema", "websockets", "cryptography")
 DURABLE_ADMISSION_NOT_MATERIALIZED = 125
+ORCHESTRATION_ID_ALREADY_ADMITTED = 124
 
 
 def _runtime_preflight(command: list[str], environment: dict[str, str]) -> dict[str, object]:
@@ -129,18 +132,69 @@ def _project_root_from_arguments(arguments: list[str]) -> Path | None:
     return None
 
 
-def _checkpoint_snapshot(project_root: Path | None) -> frozenset[str]:
-    if project_root is None:
-        return frozenset()
-    directory = project_root / ".adaptive" / "orchestrations"
+def _argument_value(arguments: list[str], name: str) -> str | None:
+    for index, argument in enumerate(arguments):
+        if argument == name:
+            if index + 1 >= len(arguments):
+                return None
+            value = arguments[index + 1].strip()
+            return value or None
+        if argument.startswith(name + "="):
+            value = argument.split("=", 1)[1].strip()
+            return value or None
+    return None
+
+
+def _checkpoint_path(project_root: Path, orchestration_id: str) -> Path:
+    digest = hashlib.sha256(orchestration_id.encode("utf-8")).hexdigest()
+    return project_root / ".adaptive" / "orchestrations" / f"{digest}.json"
+
+
+def _project_status(
+    *,
+    command: list[str],
+    environment: dict[str, str],
+    project_root: Path,
+    orchestration_id: str,
+) -> tuple[dict[str, object] | None, str | None]:
     try:
-        return frozenset(
-            str(path.resolve())
-            for path in directory.glob("*.json")
-            if path.is_file()
+        completed = subprocess.run(
+            [
+                *command,
+                "project-status",
+                "--orchestration-id",
+                orchestration_id,
+                "--project-root",
+                str(project_root),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
         )
-    except OSError:
-        return frozenset()
+    except OSError as exc:
+        return None, f"project-status launch failed: {type(exc).__name__}"
+    if completed.returncode != 0:
+        return None, f"project-status exited {completed.returncode}"
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return None, "project-status returned invalid JSON"
+    if not isinstance(payload, dict) or payload.get("orchestration_id") != orchestration_id:
+        return None, "project-status identity mismatch"
+    return payload, None
+
+
+def _watch_durable_admission(
+    *,
+    checkpoint_path: Path,
+    stop_event: threading.Event,
+    emit,
+) -> None:
+    while not stop_event.wait(0.1):
+        if checkpoint_path.is_file():
+            emit()
+            return
 
 
 def _emit_admission_event(
@@ -153,6 +207,8 @@ def _emit_admission_event(
     checkpoint_created: bool | None = None,
     durable_admission_verified: bool | None = None,
     error: str | None = None,
+    orchestration_id: str | None = None,
+    checkpoint_ref: str | None = None,
 ) -> None:
     payload: dict[str, object] = {
         "event": event,
@@ -163,6 +219,10 @@ def _emit_admission_event(
         "attempt": attempt,
         "adaptive_command": adaptive_command,
     }
+    if orchestration_id:
+        payload["orchestration_id"] = orchestration_id
+    if checkpoint_ref:
+        payload["checkpoint_ref"] = checkpoint_ref
     if returncode is not None:
         payload["returncode"] = returncode
     if checkpoint_created is not None:
@@ -180,6 +240,50 @@ def _emit_admission_event(
     )
 
 
+def _emit_final_event(
+    *,
+    bridge_invocation_id: str,
+    adaptive_command: str,
+    returncode: int,
+    orchestration_id: str | None,
+    project_status: dict[str, object] | None,
+    status_error: str | None = None,
+) -> None:
+    payload: dict[str, object] = {
+        "bridge_invocation_id": bridge_invocation_id,
+        "adaptive_command": adaptive_command,
+        "returncode": returncode,
+    }
+    if orchestration_id:
+        payload["orchestration_id"] = orchestration_id
+    if project_status is not None:
+        payload["authoritative_project_state"] = True
+        for key in (
+            "status",
+            "terminal",
+            "desired_state",
+            "work_unit_count",
+            "completed_work_unit_ids",
+            "blocked_work_unit_ids",
+            "recovery_required_work_unit_ids",
+            "unfinished_work_unit_ids",
+            "active_execution_count",
+            "pending_replan",
+            "replan_count",
+        ):
+            if key in project_status:
+                payload[key] = project_status[key]
+    else:
+        payload["authoritative_project_state"] = False
+    if status_error:
+        payload["status_error"] = status_error
+    print(
+        "BRIDGE_FINAL " + json.dumps(payload, ensure_ascii=False, sort_keys=True),
+        file=sys.stderr,
+        flush=True,
+    )
+
+
 def _run_adaptive_with_admission_retry(
     *,
     command: list[str],
@@ -187,15 +291,12 @@ def _run_adaptive_with_admission_retry(
     guarded_arguments: list[str],
     environment: dict[str, str],
 ) -> int:
-    """Run Adaptive and retry exactly once only before durable admission.
+    """Run Adaptive with exact project identity and pre-admission-only retry.
 
-    For normal project orchestration with an explicit project root, a new
-    project checkpoint is the durable evidence that Adaptive crossed its
-    admission boundary. Bridge correlation metadata and child-process startup
-    are not admission proof.
-
-    Plan-only mode is intentionally exempt because it does not materialize a
-    resumable project checkpoint.
+    For normal project orchestration the Bridge allocates the orchestration id
+    before launching Adaptive. That id names the exact durable checkpoint and
+    remains the only project identity used for admission, reconciliation and
+    final reporting.
     """
     bridge_invocation_id = uuid4().hex
     project_root = _project_root_from_arguments(guarded_arguments)
@@ -205,17 +306,104 @@ def _run_adaptive_with_admission_retry(
         and project_root is not None
         and not plan_only
     )
+
+    orchestration_id = _argument_value(guarded_arguments, "--orchestration-id")
+    if requires_durable_checkpoint and orchestration_id is None:
+        orchestration_id = uuid4().hex
+        guarded_arguments = [
+            *guarded_arguments,
+            "--orchestration-id",
+            orchestration_id,
+        ]
+
+    checkpoint_path = (
+        _checkpoint_path(project_root, orchestration_id)
+        if requires_durable_checkpoint
+        and project_root is not None
+        and orchestration_id is not None
+        else None
+    )
+    if checkpoint_path is not None and checkpoint_path.exists():
+        _emit_admission_event(
+            event="existing-durable-orchestration",
+            admission_id=bridge_invocation_id,
+            attempt=0,
+            adaptive_command=adaptive_command,
+            checkpoint_created=False,
+            durable_admission_verified=True,
+            orchestration_id=orchestration_id,
+            checkpoint_ref=checkpoint_path.name,
+            error=(
+                "Fresh orchestrate will not reuse an admitted orchestration id; "
+                "use project-status/resume-project."
+            ),
+        )
+        status, status_error = _project_status(
+            command=command,
+            environment=environment,
+            project_root=project_root,
+            orchestration_id=orchestration_id,
+        )
+        _emit_final_event(
+            bridge_invocation_id=bridge_invocation_id,
+            adaptive_command=adaptive_command,
+            returncode=ORCHESTRATION_ID_ALREADY_ADMITTED,
+            orchestration_id=orchestration_id,
+            project_status=status,
+            status_error=status_error,
+        )
+        return ORCHESTRATION_ID_ALREADY_ADMITTED
+
     max_attempts = 2 if adaptive_command == "orchestrate" else 1
 
     for attempt in range(1, max_attempts + 1):
-        before = _checkpoint_snapshot(project_root)
+        checkpoint_existed_before = bool(
+            checkpoint_path is not None and checkpoint_path.exists()
+        )
         _emit_admission_event(
             event="invocation-start",
             admission_id=bridge_invocation_id,
             attempt=attempt,
             adaptive_command=adaptive_command,
             durable_admission_verified=False if requires_durable_checkpoint else None,
+            orchestration_id=orchestration_id,
+            checkpoint_ref=(checkpoint_path.name if checkpoint_path is not None else None),
         )
+
+        stop_event = threading.Event()
+        admission_emitted = threading.Event()
+
+        def emit_materialized() -> None:
+            if admission_emitted.is_set():
+                return
+            admission_emitted.set()
+            _emit_admission_event(
+                event="durable-admission-materialized",
+                admission_id=bridge_invocation_id,
+                attempt=attempt,
+                adaptive_command=adaptive_command,
+                checkpoint_created=True,
+                durable_admission_verified=True,
+                orchestration_id=orchestration_id,
+                checkpoint_ref=(
+                    checkpoint_path.name if checkpoint_path is not None else None
+                ),
+            )
+
+        watcher = None
+        if checkpoint_path is not None:
+            watcher = threading.Thread(
+                target=_watch_durable_admission,
+                kwargs={
+                    "checkpoint_path": checkpoint_path,
+                    "stop_event": stop_event,
+                    "emit": emit_materialized,
+                },
+                name=f"adaptive-admission-{orchestration_id}",
+                daemon=True,
+            )
+            watcher.start()
+
         try:
             completed = subprocess.run(
                 [*command, adaptive_command, *guarded_arguments],
@@ -223,6 +411,9 @@ def _run_adaptive_with_admission_retry(
                 env=environment,
             )
         except OSError as exc:
+            stop_event.set()
+            if watcher is not None:
+                watcher.join(timeout=1.0)
             _emit_admission_event(
                 event="launch-error",
                 admission_id=bridge_invocation_id,
@@ -230,14 +421,37 @@ def _run_adaptive_with_admission_retry(
                 adaptive_command=adaptive_command,
                 checkpoint_created=False,
                 durable_admission_verified=False if requires_durable_checkpoint else None,
+                orchestration_id=orchestration_id,
+                checkpoint_ref=(
+                    checkpoint_path.name if checkpoint_path is not None else None
+                ),
                 error=str(exc),
             )
             if attempt < max_attempts:
                 continue
+            _emit_final_event(
+                bridge_invocation_id=bridge_invocation_id,
+                adaptive_command=adaptive_command,
+                returncode=127,
+                orchestration_id=orchestration_id,
+                project_status=None,
+                status_error="Adaptive child process could not be launched.",
+            )
             return 127
+        finally:
+            stop_event.set()
 
-        after = _checkpoint_snapshot(project_root)
-        checkpoint_created = bool(after - before)
+        if watcher is not None:
+            watcher.join(timeout=1.0)
+
+        checkpoint_created = bool(
+            checkpoint_path is not None
+            and checkpoint_path.exists()
+            and not checkpoint_existed_before
+        )
+        if checkpoint_created and not admission_emitted.is_set():
+            emit_materialized()
+
         durable_admission_verified = (
             checkpoint_created if requires_durable_checkpoint else None
         )
@@ -255,7 +469,24 @@ def _run_adaptive_with_admission_retry(
             returncode=completed.returncode,
             checkpoint_created=checkpoint_created,
             durable_admission_verified=durable_admission_verified,
+            orchestration_id=orchestration_id,
+            checkpoint_ref=(checkpoint_path.name if checkpoint_path is not None else None),
         )
+
+        project_status = None
+        status_error = None
+        if (
+            checkpoint_path is not None
+            and checkpoint_path.exists()
+            and project_root is not None
+            and orchestration_id is not None
+        ):
+            project_status, status_error = _project_status(
+                command=command,
+                environment=environment,
+                project_root=project_root,
+                orchestration_id=orchestration_id,
+            )
 
         if requires_durable_checkpoint and not checkpoint_created:
             if attempt < max_attempts:
@@ -267,6 +498,10 @@ def _run_adaptive_with_admission_retry(
                     returncode=completed.returncode,
                     checkpoint_created=False,
                     durable_admission_verified=False,
+                    orchestration_id=orchestration_id,
+                    checkpoint_ref=(
+                        checkpoint_path.name if checkpoint_path is not None else None
+                    ),
                 )
                 continue
             if completed.returncode == 0:
@@ -278,16 +513,49 @@ def _run_adaptive_with_admission_retry(
                     returncode=DURABLE_ADMISSION_NOT_MATERIALIZED,
                     checkpoint_created=False,
                     durable_admission_verified=False,
-                    error="Adaptive exited successfully but created no durable project checkpoint.",
+                    orchestration_id=orchestration_id,
+                    checkpoint_ref=(
+                        checkpoint_path.name if checkpoint_path is not None else None
+                    ),
+                    error=(
+                        "Adaptive exited successfully but created no durable "
+                        "project checkpoint."
+                    ),
+                )
+                _emit_final_event(
+                    bridge_invocation_id=bridge_invocation_id,
+                    adaptive_command=adaptive_command,
+                    returncode=DURABLE_ADMISSION_NOT_MATERIALIZED,
+                    orchestration_id=orchestration_id,
+                    project_status=None,
+                    status_error="Durable project admission did not materialize.",
                 )
                 return DURABLE_ADMISSION_NOT_MATERIALIZED
+            _emit_final_event(
+                bridge_invocation_id=bridge_invocation_id,
+                adaptive_command=adaptive_command,
+                returncode=completed.returncode,
+                orchestration_id=orchestration_id,
+                project_status=None,
+                status_error="Adaptive exited before durable project admission.",
+            )
             return completed.returncode
+
+        _emit_final_event(
+            bridge_invocation_id=bridge_invocation_id,
+            adaptive_command=adaptive_command,
+            returncode=completed.returncode,
+            orchestration_id=orchestration_id,
+            project_status=project_status,
+            status_error=status_error,
+        )
 
         if completed.returncode == 0:
             return 0
 
-        # Once any new checkpoint exists, never retry automatically: the same
-        # orchestration may already have durable state that must be resumed.
+        # Once the exact project checkpoint exists, never retry automatically:
+        # the same orchestration may already have durable work that must be
+        # reconciled/resumed.
         if checkpoint_created:
             return completed.returncode
 
@@ -305,6 +573,10 @@ def _run_adaptive_with_admission_retry(
                 returncode=completed.returncode,
                 checkpoint_created=False,
                 durable_admission_verified=False,
+                orchestration_id=orchestration_id,
+                checkpoint_ref=(
+                    checkpoint_path.name if checkpoint_path is not None else None
+                ),
             )
             continue
         return completed.returncode
@@ -371,6 +643,7 @@ def main(argv: list[str] | None = None) -> int:
         "wait",
         "resume-project",
         "pause-project",
+        "project-status",
         "supervise-projects",
     }
     explicit_command = (

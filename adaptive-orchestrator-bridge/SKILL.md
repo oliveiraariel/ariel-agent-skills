@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.9.0"
+  version: "1.0.0"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -111,6 +111,31 @@ Result integrity metadata and the completion manifest are owned by deterministic
 
 Bridge diagnostics should surface the active worker protocol name/version when Adaptive exposes them so runtime identity can be proven before dispatch.
 
+## OpenClaw async process discipline
+
+Adaptive project execution can outlive the foreground wait window of OpenClaw's shell tool. Treat the OpenClaw background-exec session and the Adaptive project checkpoint as two different layers.
+
+Required behavior:
+
+- start the Adaptive bridge invocation only once;
+- if OpenClaw backgrounds the command, retain the returned OpenClaw process/session handle and use the supported `process` lifecycle or completion notification;
+- when collecting an already-finished background command whose output may be large, prefer `process log`/paginated aggregated output or the compact trailing `BRIDGE_FINAL`; do not assume one late `process poll` contains the complete child transcript;
+- **never** emulate waiting with `tail --pid`, `sleep` loops, repeated shell PID probes, or a second equivalent bridge invocation;
+- an operating-system PID is process evidence only and is never Adaptive project state;
+- the Bridge-allocated `orchestration_id` is the canonical project identity; the SHA-256 checkpoint filename is only a storage key and must never be presented as the orchestration id;
+- `BRIDGE_ADMISSION event=durable-admission-materialized` is the Bridge proof that the exact project checkpoint exists;
+- `BRIDGE_FINAL` is a compact final transport marker. When it carries `authoritative_project_state=true`, its project fields were re-read through Adaptive `project-status` after the child command ended;
+- if any observer/precheck/tool result conflicts with `BRIDGE_FINAL` or a fresh `project-status` query, the authoritative project checkpoint wins;
+- after durable project admission, a previous bounded `run` precheck is historical diagnostic evidence only. It cannot classify the later project orchestration as blocked, running, or completed.
+
+When a completion notification is missing, stale, truncated, or ambiguous, invoke:
+
+```text
+project-status --orchestration-id <exact-id> --project-root <project-root>
+```
+
+before producing any user-visible terminal conclusion. If that status is non-terminal, use the same orchestration's targeted supervisor/resume path. Do not use the global supervisor merely to discover the state of one known orchestration.
+
 ## Result and recovery semantics
 
 ### Single-unit mode
@@ -145,6 +170,7 @@ Learned bridge rules:
 - **Delegation is an execution boundary.** Once project work is admitted to Adaptive, do not perform the same delegated project work out of band in the parent OpenClaw session; observe/reconcile it or delegate a subsequent Work Unit instead.
 - After a multiagent admission succeeds, do not send a user-visible completion/finalization message merely because Bridge invocation returned successfully. Continue observing/reconciling the admitted orchestration until Adaptive returns a project-level terminal result, or explicitly report that the orchestration is still running/incomplete.
 - Before saying a multiagent round is complete, verify authoritative project state from Adaptive checkpoint/result data rather than inferring completion from Bridge success, dashboard cosmetics, elapsed time, or the absence of an active foreground command.
+- Before saying a durably admitted multiagent round is blocked or failed, perform the same authoritative project-state verification. A stale precheck, dead observer PID, missing OpenClaw background handle, or earlier infrastructure warning cannot override a terminal `COMPLETED` project checkpoint.
 - If the caller asks whether workers finished, distinguish at least: admission accepted, workers dispatched/active, Work Units completed/accepted, reviews pending/returned, fan-in pending, and project terminal state.
 - Do not translate `RUNNING`, `PARTIAL`, `BLOCKED`, pending review, or recoverable asynchronous state into a friendly but false “completed” response.
 - A persisted/dashboard `RUNNING` label is not proof of an active worker. When Adaptive exposes current execution/session/run evidence, prefer that evidence over stale historical UI state and surface any mismatch explicitly.
@@ -174,7 +200,8 @@ When Adaptive enables persistent investigation/recovery, the bridge remains a tr
 - A launcher PID or controller process is not sufficient proof of an active worker.
 - Do not start a replacement recovery from the bridge merely because a Work Unit is `RETURNED`, `RECOVERY_REQUIRED`, or `BLOCKED` by strategy exhaustion. Adaptive core decides whether to invoke the Recovery Strategist, replan, and dispatch.
 - After durable project admission, do not ask the user to authorize an out-of-band fallback merely because the caller/controller ended or an intermediate observation is stale. Reconcile the same orchestration first; Adaptive's per-orchestration guardian is the normal persistence path.
-- The bridge may invoke Adaptive's supported `resume-project` and `supervise-projects` commands when explicit reconciliation is needed. These commands operate on existing durable state and must never be translated into a fresh replacement orchestration.
+- The bridge may invoke Adaptive's supported `project-status`, `resume-project` and `supervise-projects` commands when explicit reconciliation is needed. These commands operate on existing durable state and must never be translated into a fresh replacement orchestration.
+- Prefer targeted `project-status` and targeted supervision for a known orchestration id. Do not stop or manipulate unrelated project checkpoints to recover one project.
 - When the developer requests pause, preserve the orchestration id and use Adaptive's supported pause/resume path rather than abandoning the execution narrative.
 - Learning promotion after a successful retest belongs to Adaptive incident/learning lifecycle; the bridge may report it but must not rewrite Skills or knowledge independently.
 

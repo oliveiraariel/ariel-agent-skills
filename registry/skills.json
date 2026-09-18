@@ -555,7 +555,7 @@
       "compatible_runtimes": [
         "openclaw"
       ],
-      "version": "0.9.0",
+      "version": "1.0.0",
       "execution_profile": {
         "responsibility": "runtime-bridge",
         "model_tier_hint": "orchestrator-policy"

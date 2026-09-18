@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "0.7.0"
+  version: "0.8.0"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -155,6 +155,14 @@ Learned bridge rules:
 - Missing implementation/wiring that is already authorized by the delegated Work Unit is not a bridge-level blocker; let Adaptive/worker continue or return the structured incomplete state.
 - Distinguish model-quality failures from transport/runtime/tool/environment failures in user-visible summaries when Adaptive provides that classification.
 - Do not treat an intermediate gate such as “plan produced”, “tests green”, or “PR merged” as project completion when Adaptive still reports required unfinished work.
+
+## Recovery Loop terminology
+
+For OpenClaw-facing conversation, **Recovery Loop** means the complete **Adaptive Persistent Recovery & Learning Lifecycle** documented by Adaptive core. It is a subsystem/capability coordinated by the Orchestrator, not a separate scheduler and not a Skill that owns dispatch.
+
+A normal task does not require the user to say “use the Recovery Loop”. In ordinary project execution the Orchestrator may activate Recovery Loop behavior proactively when retrabalho, strategy exhaustion, recovery, retest, or learning conditions are detected.
+
+Questions such as “o Recovery Loop foi acionado?”, “em que etapa está o Recovery Loop?”, “o que ele aprendeu?” or “pause/retome o Recovery Loop” refer to the state of that Adaptive lifecycle. The bridge must surface the authoritative Adaptive state and must not emulate a conversational retry loop locally.
 
 ## Persistent recovery boundary
 

@@ -159,6 +159,63 @@ def test_diagnose_does_not_print_secrets(monkeypatch, capsys):
     assert "secret-token" not in captured.err
 
 
+
+def test_diagnose_resolves_code_root_without_pythonpath(monkeypatch, capsys, tmp_path):
+    repo = tmp_path / "adaptive-ai-orchestrator"
+    module = repo / "src" / "adaptive_orchestrator" / "__init__.py"
+    module.parent.mkdir(parents=True)
+    module.write_text("", encoding="utf-8")
+    python = repo / ".venv" / "bin" / "python"
+    python.parent.mkdir(parents=True)
+    python.write_text("", encoding="utf-8")
+
+    command = [str(python), "-m", "adaptive_orchestrator"]
+    monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", str(repo))
+    monkeypatch.delenv("PYTHONPATH", raising=False)
+    monkeypatch.setattr(
+        bridge,
+        "_resolve_explicit_root",
+        lambda root: (command, {}),
+    )
+    monkeypatch.setattr(
+        bridge,
+        "_runtime_preflight",
+        lambda command, environment: {
+            "ok": True,
+            "found": {
+                name: (
+                    str(module)
+                    if name == "adaptive_orchestrator"
+                    else f"/modules/{name}.py"
+                )
+                for name in bridge.RUNTIME_MODULES
+            },
+        },
+    )
+
+    class Completed:
+        returncode = 0
+        stdout = json.dumps(
+            {
+                "adaptive_version": "test",
+                "adaptive_module_path": str(module),
+                "python_prefix": str(repo / ".venv"),
+                "python_base_prefix": "/usr",
+                "venv_active": True,
+                "gateway_dependencies_available": True,
+                "worker_protocol_name": "adaptive-worker-protocol",
+                "worker_protocol_version": 1,
+            }
+        )
+        stderr = ""
+
+    monkeypatch.setattr(bridge.subprocess, "run", lambda *args, **kwargs: Completed())
+
+    assert bridge.main(["--diagnose"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["resolved_code_root"] == str(repo.resolve())
+
+
 def test_preflight_uses_resolved_executable_and_environment(monkeypatch):
     calls = []
     class Completed:

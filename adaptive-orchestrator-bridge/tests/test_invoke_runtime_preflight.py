@@ -359,3 +359,96 @@ def test_non_orchestrate_command_never_retries(monkeypatch, tmp_path):
     assert result == 4
     assert calls == 1
 
+
+
+def test_bridge_routes_supported_supervisor_command_without_worker_constraint(
+    monkeypatch, tmp_path
+):
+    command = [sys.executable, "-m", "adaptive_orchestrator"]
+    captured = {}
+
+    monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", "/root")
+    monkeypatch.setattr(
+        bridge,
+        "_resolve_explicit_root",
+        lambda root: (command, {"PYTHONPATH": "/adaptive/src"}),
+    )
+    monkeypatch.setattr(
+        bridge,
+        "_runtime_preflight",
+        lambda command, environment: {
+            "ok": True,
+            "found": {name: "/module.py" for name in bridge.RUNTIME_MODULES},
+        },
+    )
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+        return 0
+
+    monkeypatch.setattr(
+        bridge,
+        "_run_adaptive_with_admission_retry",
+        fake_run,
+    )
+
+    assert bridge.main(
+        [
+            "supervise-projects",
+            "--watch",
+            "--orchestration-id",
+            "orch-1",
+            "--project-root",
+            str(tmp_path),
+        ]
+    ) == 0
+
+    assert captured["adaptive_command"] == "supervise-projects"
+    assert captured["guarded_arguments"][:2] == ["--watch", "--orchestration-id"]
+    assert "--constraint" not in captured["guarded_arguments"]
+    assert bridge.RECURSION_GUARD not in captured["guarded_arguments"]
+
+
+def test_bridge_routes_resume_project_as_recovery_management_command(
+    monkeypatch, tmp_path
+):
+    command = [sys.executable, "-m", "adaptive_orchestrator"]
+    captured = {}
+
+    monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", "/root")
+    monkeypatch.setattr(
+        bridge,
+        "_resolve_explicit_root",
+        lambda root: (command, {"PYTHONPATH": "/adaptive/src"}),
+    )
+    monkeypatch.setattr(
+        bridge,
+        "_runtime_preflight",
+        lambda command, environment: {
+            "ok": True,
+            "found": {name: "/module.py" for name in bridge.RUNTIME_MODULES},
+        },
+    )
+
+    def fake_run(**kwargs):
+        captured.update(kwargs)
+        return 0
+
+    monkeypatch.setattr(
+        bridge,
+        "_run_adaptive_with_admission_retry",
+        fake_run,
+    )
+
+    assert bridge.main(
+        [
+            "resume-project",
+            "--orchestration-id",
+            "orch-1",
+            "--project-root",
+            str(tmp_path),
+        ]
+    ) == 0
+
+    assert captured["adaptive_command"] == "resume-project"
+    assert "--constraint" not in captured["guarded_arguments"]

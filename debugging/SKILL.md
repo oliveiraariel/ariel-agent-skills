@@ -4,7 +4,7 @@ description: Diagnose difficult defects and performance regressions with a repro
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Debugging
@@ -35,6 +35,13 @@ Do not start with the fix. Start with a feedback loop that reliably goes red on 
 - Record the failure class, causal evidence, affected identifiers, remediation, and regression check so later model-routing or reliability analysis can separate model quality from infrastructure noise.
 
 Root-cause analysis may require a strong reasoning tier when the failure is complex or high-impact. Concrete code remediation after diagnosis is a candidate for the code-specialist tier under orchestrator policy.
+
+## Validated investigation lessons
+
+- When conversational/session memory conflicts with correlated operational evidence, prefer execution identity, active-execution state, valid lease, fresh heartbeat, checkpoint/Result Store evidence appropriate to the question. A PID, launcher, or stale `RUNNING` label alone is not proof of useful worker execution.
+- For component failures, use a controlled A/B isolation when safe: reproduce with the suspected component active, hold the environment stable, disable only that component, and compare behavior. If the A/B result isolates the component, inspect the platform-native logs immediately before changing code.
+- A failed hypothesis is useful evidence. Preserve that it was tested and refuted so later investigation does not repeat the same path without new evidence.
+- If ordinary debugging/retry has exhausted materially distinct paths, return the failure history to Adaptive's `investigation` / Recovery Strategist capability rather than inventing another equivalent retry locally.
 
 ## Completion gate
 

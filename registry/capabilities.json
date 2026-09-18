@@ -80,6 +80,10 @@
     {
       "id": "investigation.recovery-strategy",
       "description": "Analyze persistent incidents and exhausted solution paths, generate materially different recovery strategies, and return structured options to the orchestrator without dispatching or implementing."
+    },
+    {
+      "id": "investigation.learning-analysis",
+      "description": "Analyze a successful retest after prior failure/revision, determine the evidence-supported reusable lesson and recommend the narrowest useful learning/Skill dissemination scope without mutating knowledge directly."
     }
   ]
 }

@@ -366,7 +366,18 @@ def main(argv: list[str] | None = None) -> int:
 
     multi_agent = MULTI_AGENT_FLAG in arguments
     arguments = [argument for argument in arguments if argument != MULTI_AGENT_FLAG]
-    explicit_command = arguments[0] if arguments and arguments[0] in {"dispatch", "wait"} else None
+    explicit_commands = {
+        "dispatch",
+        "wait",
+        "resume-project",
+        "pause-project",
+        "supervise-projects",
+    }
+    explicit_command = (
+        arguments[0]
+        if arguments and arguments[0] in explicit_commands
+        else None
+    )
     adaptive_command = "orchestrate" if multi_agent else "run"
     if explicit_command and not multi_agent:
         adaptive_command = explicit_command
@@ -376,7 +387,7 @@ def main(argv: list[str] | None = None) -> int:
     # Every delegated OpenClaw worker can see this bridge skill too. Always add a
     # runtime constraint so a nested task cannot recursively re-enter Adaptive.
     guarded_arguments = list(arguments)
-    if adaptive_command != "wait":
+    if adaptive_command in {"run", "dispatch", "orchestrate"}:
         guarded_arguments.extend(("--constraint", RECURSION_GUARD))
 
     return _run_adaptive_with_admission_retry(

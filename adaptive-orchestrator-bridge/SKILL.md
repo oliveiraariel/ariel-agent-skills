@@ -119,6 +119,7 @@ Required behavior:
 
 - start the Adaptive bridge invocation only once;
 - if OpenClaw backgrounds the command, retain the returned OpenClaw process/session handle and use the supported `process` lifecycle or completion notification;
+- when collecting an already-finished background command whose output may be large, prefer `process log`/paginated aggregated output or the compact trailing `BRIDGE_FINAL`; do not assume one late `process poll` contains the complete child transcript;
 - **never** emulate waiting with `tail --pid`, `sleep` loops, repeated shell PID probes, or a second equivalent bridge invocation;
 - an operating-system PID is process evidence only and is never Adaptive project state;
 - the Bridge-allocated `orchestration_id` is the canonical project identity; the SHA-256 checkpoint filename is only a storage key and must never be presented as the orchestration id;

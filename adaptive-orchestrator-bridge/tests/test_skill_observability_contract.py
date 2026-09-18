@@ -23,3 +23,14 @@ def test_recovery_loop_is_proactive_after_durable_admission() -> None:
     assert "detached per-orchestration supervisor guardian" in text
     assert "do not ask the user to authorize an out-of-band fallback" in text
     assert "`resume-project` and `supervise-projects`" in text
+
+
+
+def test_async_project_finalization_uses_authoritative_project_state() -> None:
+    text = SKILL.read_text(encoding="utf-8")
+    assert "never" in text and "tail --pid" in text
+    assert "BRIDGE_FINAL" in text
+    assert "project-status --orchestration-id" in text
+    assert "checkpoint filename is only a storage key" in text
+    assert "previous bounded `run` precheck is historical diagnostic evidence only" in text
+    assert "stale precheck" in text

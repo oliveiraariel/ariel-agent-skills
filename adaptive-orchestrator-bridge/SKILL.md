@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "1.0.0"
+  version: "1.1.0"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -20,12 +20,16 @@ Use this bridge when the user explicitly asks to run, use, delegate to, or execu
 
 Do not use it merely because the Adaptive repository is readable.
 
-Choose the Adaptive entrypoint according to the work:
+Choose the Adaptive entrypoint explicitly according to the work:
 
-- **bounded one-Work-Unit task** → normal bridge invocation;
+- **bounded one-Work-Unit task** → add `--single-unit`;
 - **non-trivial project work that can benefit from decomposition, dependencies, multiple specialists, parallel execution, fan-in, recovery, or replanning** → add `--multi-agent` so the helper invokes `adaptive-orchestrator orchestrate`.
 
+The bridge intentionally has **no implicit default execution mode**. If neither flag is supplied it refuses the invocation instead of silently degrading a project request into a fresh one-Work-Unit `run`.
+
 Do not manually simulate a multiagent plan in this skill. In multi-agent mode the Adaptive engine owns the Work Graph, ready frontier, worker count, skill selection, model routing, concurrency, continuous slot replenishment, evaluation, fan-in, recovery, and bounded replanning.
+
+For one user request that is clearly project work, invoke the bridge **exactly once** with `--multi-agent`. Do not split phases such as discovery, implementation, tests, packaging, or handoff into separate top-level bridge invocations; those phases belong inside one Adaptive Work Graph. A handoff-only request is a legitimate `--single-unit` task when it truly asks only for one bounded artifact and no project mutation beyond that artifact.
 
 ## Invocation
 
@@ -35,6 +39,7 @@ Invoke the helper at `{baseDir}/scripts/invoke.py` on the host. Pass only the ac
 
 ```bash
 python3 "{baseDir}/scripts/invoke.py" \
+  --single-unit \
   --objective "Analyze this project and return the next safe engineering step." \
   --agent main
 ```

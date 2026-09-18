@@ -34,3 +34,13 @@ def test_async_project_finalization_uses_authoritative_project_state() -> None:
     assert "checkpoint filename is only a storage key" in text
     assert "previous bounded `run` precheck is historical diagnostic evidence only" in text
     assert "stale precheck" in text
+
+
+
+def test_project_requests_have_one_explicit_bridge_execution_mode() -> None:
+    text = SKILL.read_text(encoding="utf-8")
+    assert "no implicit default execution mode" in text
+    assert "exactly once" in text
+    assert "--single-unit" in text
+    assert "--multi-agent" in text
+    assert "Do not split phases such as discovery, implementation, tests, packaging, or handoff" in text

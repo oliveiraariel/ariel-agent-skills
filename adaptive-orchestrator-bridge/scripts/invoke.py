@@ -24,6 +24,7 @@ RECURSION_GUARD = (
     "Adaptive orchestration run. Execute only the delegated objective."
 )
 MULTI_AGENT_FLAG = "--multi-agent"
+SINGLE_UNIT_FLAG = "--single-unit"
 RUNTIME_MODULES = ("adaptive_orchestrator", "jsonschema", "websockets", "cryptography")
 DURABLE_ADMISSION_NOT_MATERIALIZED = 125
 ORCHESTRATION_ID_ALREADY_ADMITTED = 124
@@ -678,7 +679,20 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     multi_agent = MULTI_AGENT_FLAG in arguments
-    arguments = [argument for argument in arguments if argument != MULTI_AGENT_FLAG]
+    single_unit = SINGLE_UNIT_FLAG in arguments
+    arguments = [
+        argument
+        for argument in arguments
+        if argument not in {MULTI_AGENT_FLAG, SINGLE_UNIT_FLAG}
+    ]
+    if multi_agent and single_unit:
+        print(
+            "BRIDGE_EXECUTION_MODE_CONFLICT: choose exactly one of "
+            "--multi-agent or --single-unit.",
+            file=sys.stderr,
+        )
+        return 2
+
     explicit_commands = {
         "dispatch",
         "wait",
@@ -692,11 +706,26 @@ def main(argv: list[str] | None = None) -> int:
         if arguments and arguments[0] in explicit_commands
         else None
     )
-    adaptive_command = "orchestrate" if multi_agent else "run"
-    if explicit_command and not multi_agent:
-        adaptive_command = explicit_command
     if explicit_command:
+        if multi_agent or single_unit:
+            print(
+                "BRIDGE_EXECUTION_MODE_CONFLICT: management commands must not "
+                "include --multi-agent or --single-unit.",
+                file=sys.stderr,
+            )
+            return 2
+        adaptive_command = explicit_command
         arguments = arguments[1:]
+    else:
+        if not multi_agent and not single_unit:
+            print(
+                "BRIDGE_EXECUTION_MODE_REQUIRED: choose --multi-agent for one "
+                "durable project orchestration or --single-unit for one bounded "
+                "Work Unit. The bridge will not silently default to run.",
+                file=sys.stderr,
+            )
+            return 2
+        adaptive_command = "orchestrate" if multi_agent else "run"
 
     # Every delegated OpenClaw worker can see this bridge skill too. Always add a
     # runtime constraint so a nested task cannot recursively re-enter Adaptive.

@@ -278,9 +278,9 @@ def test_orchestrate_retries_once_after_child_launch_oserror(
         calls += 1
         if calls == 1:
             raise OSError("temporary exec failure")
-        checkpoint_dir = project / ".adaptive" / "orchestrations"
-        checkpoint_dir.mkdir(parents=True)
-        (checkpoint_dir / "accepted.json").write_text("{}", encoding="utf-8")
+        orchestration_id = bridge._argument_value(args, "--orchestration-id")
+        assert orchestration_id is not None
+        _write_project_checkpoint(project, orchestration_id)
         return Completed()
 
     monkeypatch.setattr(bridge.subprocess, "run", fake_run)

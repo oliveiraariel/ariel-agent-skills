@@ -15,3 +15,11 @@ def test_control_room_is_not_expected_to_infer_out_of_band_project_execution() -
     text = SKILL.read_text(encoding="utf-8")
     assert "Control Room" in text
     assert "invisibly elsewhere" in text
+
+
+
+def test_recovery_loop_is_proactive_after_durable_admission() -> None:
+    text = SKILL.read_text(encoding="utf-8")
+    assert "detached per-orchestration supervisor guardian" in text
+    assert "do not ask the user to authorize an out-of-band fallback" in text
+    assert "`resume-project` and `supervise-projects`" in text

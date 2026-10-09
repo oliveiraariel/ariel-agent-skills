@@ -43,6 +43,7 @@ def _status_payload(orchestration_id: str, *, terminal: bool = True) -> dict:
         "status": "COMPLETED" if terminal else "RUNNING",
         "terminal": terminal,
         "desired_state": "RUNNING",
+        "lifecycle_phase": "TERMINAL" if terminal else "EXECUTION",
         "work_unit_count": 1,
         "completed_work_unit_ids": ["wu"] if terminal else [],
         "blocked_work_unit_ids": [],
@@ -675,6 +676,7 @@ def test_bridge_final_line_carries_authoritative_terminal_state(
     assert payload["authoritative_project_state"] is True
     assert payload["terminal"] is True
     assert payload["status"] == "COMPLETED"
+    assert payload["lifecycle_phase"] == "TERMINAL"
     assert payload["returncode"] == 0
     assert payload["orchestration_id"]
 
@@ -742,4 +744,73 @@ def test_bridge_routes_explicit_single_unit(monkeypatch):
     ) == 0
     assert captured["adaptive_command"] == "run"
     assert bridge.SINGLE_UNIT_FLAG not in captured["guarded_arguments"]
+    assert "--constraint" in captured["guarded_arguments"]
+
+
+def test_multi_agent_refuses_missing_project_root_without_dispatch(monkeypatch, capsys):
+    monkeypatch.delenv("ADAPTIVE_ORCHESTRATOR_ROOT", raising=False)
+    monkeypatch.setattr(
+        bridge, "resolve_command",
+        lambda: [sys.executable, "-m", "adaptive_orchestrator"],
+    )
+    monkeypatch.setattr(
+        bridge, "_runtime_preflight", lambda *args: {"ok": True},
+    )
+    monkeypatch.setattr(
+        bridge, "_run_adaptive_with_admission_retry",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("orchestrate must not launch without --project-root")
+        ),
+    )
+
+    assert bridge.main(["--multi-agent", "--objective", "read only"]) == 2
+    assert "BRIDGE_PROJECT_ROOT_REQUIRED" in capsys.readouterr().err
+
+
+def test_multi_agent_refuses_nonexistent_project_root(monkeypatch, tmp_path, capsys):
+    monkeypatch.delenv("ADAPTIVE_ORCHESTRATOR_ROOT", raising=False)
+    monkeypatch.setattr(
+        bridge, "resolve_command",
+        lambda: [sys.executable, "-m", "adaptive_orchestrator"],
+    )
+    monkeypatch.setattr(
+        bridge, "_runtime_preflight", lambda *args: {"ok": True},
+    )
+    monkeypatch.setattr(
+        bridge, "_run_adaptive_with_admission_retry",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("orchestrate must not launch with invalid root")
+        ),
+    )
+
+    assert bridge.main([
+        "--multi-agent", "--objective", "read only",
+        "--project-root", str(tmp_path / "missing"),
+    ]) == 2
+    assert "BRIDGE_PROJECT_ROOT_INVALID" in capsys.readouterr().err
+
+
+def test_multi_agent_preserves_explicit_project_root(monkeypatch, tmp_path):
+    monkeypatch.delenv("ADAPTIVE_ORCHESTRATOR_ROOT", raising=False)
+    monkeypatch.setattr(
+        bridge, "resolve_command",
+        lambda: [sys.executable, "-m", "adaptive_orchestrator"],
+    )
+    monkeypatch.setattr(
+        bridge, "_runtime_preflight", lambda *args: {"ok": True},
+    )
+    captured = {}
+    monkeypatch.setattr(
+        bridge, "_run_adaptive_with_admission_retry",
+        lambda **kwargs: captured.update(kwargs) or 0,
+    )
+
+    assert bridge.main([
+        "--multi-agent", "--objective", "read only",
+        f"--project-root={tmp_path}", "--agent", "lp2-ecommerce",
+    ]) == 0
+    assert captured["adaptive_command"] == "orchestrate"
+    assert bridge._project_root_from_arguments(
+        captured["guarded_arguments"]
+    ) == tmp_path.resolve()
     assert "--constraint" in captured["guarded_arguments"]

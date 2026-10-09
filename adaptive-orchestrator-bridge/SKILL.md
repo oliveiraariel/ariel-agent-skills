@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "1.1.0"
+  version: "1.1.1"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -35,6 +35,8 @@ For one user request that is clearly project work, invoke the bridge **exactly o
 
 Invoke the helper at `{baseDir}/scripts/invoke.py` on the host. Pass only the actual delegated work as `--objective`; do not include outer instructions such as “use Adaptive” in the nested objective. Use `--agent main` unless the user or project context identifies another OpenClaw agent/workspace that owns the target project.
 
+**Mandatory for `--multi-agent`:** always pass `--project-root` with the explicit, existing **absolute path of the target project directory**. Do not omit this option, infer it from the current shell directory, or attempt to extract it from the natural-language objective. Without a project root the Bridge cannot prove durable admission or query the same project's authoritative checkpoint. The helper now refuses an invocation missing this argument with `BRIDGE_PROJECT_ROOT_REQUIRED` (or `BRIDGE_PROJECT_ROOT_INVALID` for a nonexistent directory). Never work around this guard by bypassing the Bridge.
+
 ### Bounded single-unit example
 
 ```bash
@@ -51,6 +53,7 @@ python3 "{baseDir}/scripts/invoke.py" \
   --multi-agent \
   --objective "Implement the authorized project objective using the project governance and current repository state." \
   --agent main \
+  --project-root "/absolute/path/to/target-project" \
   --max-concurrency 4
 ```
 
@@ -167,6 +170,8 @@ Report the project-level result, especially:
 - blockers or human decisions still required.
 
 Do not equate runtime completion with semantic correctness. A project result is strongest when testing/review/integration Work Units also passed.
+
+In authoritative `project-status`, `status` and `terminal` determine lifecycle completion. `desired_state=RUNNING` describes pause/resume **control intent**, not active work; it may remain `RUNNING` after completion. Likewise `phase=EXECUTION` can be the final persisted controller phase. When supported by Adaptive, use `lifecycle_phase=TERMINAL` as the effective terminal phase; forward it in `BRIDGE_FINAL`. Never rewrite checkpoint control fields merely for presentation.
 
 Learned bridge rules:
 

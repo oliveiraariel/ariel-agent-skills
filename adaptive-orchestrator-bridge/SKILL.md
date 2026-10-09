@@ -171,6 +171,8 @@ Report the project-level result, especially:
 
 Do not equate runtime completion with semantic correctness. A project result is strongest when testing/review/integration Work Units also passed.
 
+In authoritative `project-status`, `status` and `terminal` determine lifecycle completion. `desired_state=RUNNING` describes pause/resume **control intent**, not active work; it may remain `RUNNING` after completion. Likewise `phase=EXECUTION` can be the final persisted controller phase. When supported by Adaptive, use `lifecycle_phase=TERMINAL` as the effective terminal phase; forward it in `BRIDGE_FINAL`. Never rewrite checkpoint control fields merely for presentation.
+
 Learned bridge rules:
 
 - **Bridge invocation is not durable Adaptive admission.** The Bridge correlation/admission id and child-process startup are control-plane evidence only. For normal multiagent project execution, durable admission is proven by a new Adaptive project checkpoint; `--plan-only` is the intentional exception.

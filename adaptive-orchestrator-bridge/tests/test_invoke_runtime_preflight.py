@@ -43,6 +43,7 @@ def _status_payload(orchestration_id: str, *, terminal: bool = True) -> dict:
         "status": "COMPLETED" if terminal else "RUNNING",
         "terminal": terminal,
         "desired_state": "RUNNING",
+        "lifecycle_phase": "TERMINAL" if terminal else "EXECUTION",
         "work_unit_count": 1,
         "completed_work_unit_ids": ["wu"] if terminal else [],
         "blocked_work_unit_ids": [],
@@ -675,6 +676,7 @@ def test_bridge_final_line_carries_authoritative_terminal_state(
     assert payload["authoritative_project_state"] is True
     assert payload["terminal"] is True
     assert payload["status"] == "COMPLETED"
+    assert payload["lifecycle_phase"] == "TERMINAL"
     assert payload["returncode"] == 0
     assert payload["orchestration_id"]
 

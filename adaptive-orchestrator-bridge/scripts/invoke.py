@@ -727,6 +727,28 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         adaptive_command = "orchestrate" if multi_agent else "run"
 
+    # A durable project orchestration must have an explicit, verified project
+    # root. Otherwise the Adaptive CLI can use an implicit cwd while the Bridge
+    # cannot derive the same checkpoint path or report authoritative status.
+    # Refuse before starting Adaptive instead of silently losing observability.
+    if adaptive_command == "orchestrate":
+        project_root = _project_root_from_arguments(arguments)
+        if project_root is None:
+            print(
+                "BRIDGE_PROJECT_ROOT_REQUIRED: --multi-agent requires an "
+                "explicit --project-root <absolute-project-path> to verify "
+                "durable admission and authoritative project status.",
+                file=sys.stderr,
+            )
+            return 2
+        if not project_root.is_dir():
+            print(
+                "BRIDGE_PROJECT_ROOT_INVALID: --project-root must identify "
+                "an existing directory.",
+                file=sys.stderr,
+            )
+            return 2
+
     # Every delegated OpenClaw worker can see this bridge skill too. Always add a
     # runtime constraint so a nested task cannot recursively re-enter Adaptive.
     guarded_arguments = list(arguments)

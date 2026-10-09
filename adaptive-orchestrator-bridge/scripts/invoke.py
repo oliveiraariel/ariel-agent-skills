@@ -293,6 +293,7 @@ def _emit_final_event(
             "status",
             "terminal",
             "desired_state",
+            "lifecycle_phase",
             "work_unit_count",
             "completed_work_unit_ids",
             "blocked_work_unit_ids",

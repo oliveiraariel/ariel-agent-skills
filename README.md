@@ -61,7 +61,7 @@ project-handoff when crossing an execution/session boundary
 
 ### Interview and architecture scope
 
-The three interview skills were adapted into this repository from `oliveiraariel/mattpocock-skills-fork`: `grilling` is the decision-tree engine, `grill-me` is a thin user entry point, and `grill-with-docs` persists decisions in a project's existing canonical documentation. They no longer assume a provider-specific Skill tool. For software, interviews consult the [documentation catalog and elicitation coverage](./documentation-governance/references/elicitation-coverage.md), and architecture choices consult [the architectural pattern decision guide](./software-architecture/references/pattern-decision-guide.md). An interview does not substitute for requirements approval, architecture review or verification.
+The three interview skills were adapted into this repository from `oliveiraariel/mattpocock-skills-fork` ([migration and acceptance scenarios](./docs/INTERVIEW-SKILL-MIGRATION.md), [MIT attribution](./docs/THIRD-PARTY-SKILLS-NOTICE.md)): `grilling` is the decision-tree engine, `grill-me` is a thin user entry point, and `grill-with-docs` persists decisions in a project's existing canonical documentation. They no longer assume a provider-specific Skill tool. For software, interviews consult the [documentation catalog and elicitation coverage](./documentation-governance/references/elicitation-coverage.md), and architecture choices consult [the architectural pattern decision guide](./software-architecture/references/pattern-decision-guide.md). An interview does not substitute for requirements approval, architecture review or verification.
 
 ### Web frontend scope
 

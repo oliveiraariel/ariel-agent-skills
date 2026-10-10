@@ -4,7 +4,7 @@ description: Discover project truth, constraints, conventions, unresolved decisi
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Project Discovery
@@ -13,7 +13,7 @@ Inspect before interrogating. Prefer evidence already present in the repository,
 
 ## Workflow
 
-1. Identify the authoritative entry points and precedence rules.
+1. Identify the authoritative entry points and precedence rules. When documentation completeness or handoff is material, load `documentation-governance` to classify the inventory of essential/conditional/recommended artifacts without imposing duplicate files.
 2. Confirm the actual repository/workspace root, current branch/ref, working-tree state, project owner/agent, and the runtime context that subsequent workers must inherit.
 3. Map stack, architecture, execution model, tests, CI, deployment, coding conventions, and relevant domain language.
 4. Detect environment entry points before execution: virtual environments, package managers, project-local tool binaries, runtime versions, and expected commands. Do not classify a missing global `PATH` entry as an application defect when a project-local executable exists.

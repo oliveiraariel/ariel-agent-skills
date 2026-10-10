@@ -19,7 +19,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.5.0",
+      "version": "0.5.2",
       "execution_profile": {
         "responsibility": "high",
         "model_tier_hint": "strong"
@@ -59,7 +59,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.2.0",
+      "version": "0.2.1",
       "execution_profile": {
         "responsibility": "adaptive",
         "model_tier_hint": "strong-when-material"
@@ -128,9 +128,121 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.1.0",
+      "version": "0.2.0",
       "evidence": [
         "domain-modeling/SKILL.md"
+      ]
+    },
+    {
+      "id": "grilling",
+      "purpose": "Elicit user-owned decisions through bounded dependency-ordered interviews using evidence, risk, documentation coverage and architectural trade-offs when relevant.",
+      "capabilities": [
+        "elicitation.decisions"
+      ],
+      "inputs": [
+        "objective",
+        "project context or decision evidence",
+        "optional documentation standard"
+      ],
+      "outputs": [
+        "decision frontier",
+        "decision register/handoff",
+        "open questions",
+        "affected document IDs"
+      ],
+      "dependencies": [],
+      "compatible_agents": [],
+      "compatible_models": [],
+      "compatible_runtimes": [],
+      "version": "1.0.0",
+      "evidence": [
+        "grilling/SKILL.md"
+      ]
+    },
+    {
+      "id": "grill-me",
+      "purpose": "Route an explicit user request for rigorous interrogation to the portable grilling capability without duplicating its policy.",
+      "capabilities": [
+        "elicitation.entrypoint"
+      ],
+      "inputs": [
+        "user intent",
+        "optional project context"
+      ],
+      "outputs": [
+        "grilling interview entry"
+      ],
+      "dependencies": [
+        "grilling"
+      ],
+      "compatible_agents": [],
+      "compatible_models": [],
+      "compatible_runtimes": [],
+      "version": "1.0.0",
+      "evidence": [
+        "grill-me/SKILL.md"
+      ]
+    },
+    {
+      "id": "grill-with-docs",
+      "purpose": "Elicit and persist traceable requirements, domain vocabulary and architecture decisions in existing canonical documentation with verified handoff.",
+      "capabilities": [
+        "elicitation.documented"
+      ],
+      "inputs": [
+        "software objective",
+        "writable canonical project documentation",
+        "approval/write authority"
+      ],
+      "outputs": [
+        "persisted decision records",
+        "glossary/ADR pointers",
+        "approved vs open choices",
+        "handoff"
+      ],
+      "dependencies": [
+        "grilling",
+        "project-discovery",
+        "documentation-governance",
+        "domain-modeling"
+      ],
+      "compatible_agents": [],
+      "compatible_models": [],
+      "compatible_runtimes": [],
+      "version": "1.0.0",
+      "evidence": [
+        "grill-with-docs/SKILL.md",
+        "software-architecture/references/pattern-decision-guide.md"
+      ]
+    },
+    {
+      "id": "documentation-governance",
+      "purpose": "Select, structure, audit, trace and reconcile authoritative software documentation artifacts proportionally to scope and risk without replacing their specialist producers.",
+      "capabilities": [
+        "documentation.governance"
+      ],
+      "inputs": [
+        "project objective",
+        "current repository/documentation evidence",
+        "approved decisions"
+      ],
+      "outputs": [
+        "artifact manifest",
+        "documentation plan",
+        "elicitation coverage",
+        "reconciliation findings",
+        "traceability gaps"
+      ],
+      "dependencies": [],
+      "compatible_agents": [],
+      "compatible_models": [],
+      "compatible_runtimes": [],
+      "version": "0.1.1",
+      "evidence": [
+        "documentation-governance/SKILL.md",
+        "documentation-governance/references/artifact-catalog.md",
+        "documentation-governance/references/elicitation-coverage.md",
+        "documentation-governance/references/artifact-contracts.md"
       ]
     },
     {
@@ -153,7 +265,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.1.0",
+      "version": "0.2.1",
       "evidence": [
         "software-specification/SKILL.md"
       ]
@@ -216,7 +328,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.3.0",
+      "version": "0.3.2",
       "execution_profile": {
         "responsibility": "high",
         "model_tier_hint": "strong"
@@ -290,7 +402,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.4.0",
+      "version": "0.4.1",
       "execution_profile": {
         "responsibility": "routine",
         "model_tier_hint": "economy-first-code-specialist-on-remediation"
@@ -478,7 +590,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.3.0",
+      "version": "0.3.1",
       "execution_profile": {
         "responsibility": "routine",
         "model_tier_hint": "economy"

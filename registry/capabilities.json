@@ -18,6 +18,22 @@
       "description": "Build domain vocabulary, invariants, relationships, and scenario-tested models."
     },
     {
+      "id": "elicitation.decisions",
+      "description": "Elicit and validate human decisions in dependency-aware bounded rounds with evidence and handoff."
+    },
+    {
+      "id": "elicitation.entrypoint",
+      "description": "Route user-initiated grilling requests to the canonical interviewing capability."
+    },
+    {
+      "id": "elicitation.documented",
+      "description": "Persist documentation-targeted interview decisions and domain/architecture records with verified authority and handoff."
+    },
+    {
+      "id": "documentation.governance",
+      "description": "Govern proportional documentation artifacts, interview coverage, authority, traceability and reconciliation."
+    },
+    {
       "id": "specification.software",
       "description": "Produce implementable software specifications with acceptance criteria and non-goals."
     },

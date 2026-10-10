@@ -4,7 +4,7 @@ description: Design and execute risk-based software verification with reproducib
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.4.0"
+  version: "0.4.1"
 ---
 
 # Testing
@@ -18,7 +18,7 @@ Choose the cheapest test layer that can reliably detect the failure being guarde
 3. Cover behavior at the appropriate mix of unit, integration, contract, end-to-end, static, and manual verification.
 4. Exercise important boundaries: invalid input, empty state, concurrency/retry, permissions, error recovery, migration/compatibility, content extremes, process restart, and persistence/reconstruction when relevant.
 5. Make failures reproducible and assertions diagnostic.
-6. Record what was actually run and what remains unverified.
+6. Record what was actually run and what remains unverified, linking important test IDs and run evidence to the approved requirement and rule IDs in the project's documentation manifest/traceability mechanism. A written test plan is not evidence of execution.
 
 ## Evidence and failure classification
 

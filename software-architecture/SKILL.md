@@ -4,12 +4,14 @@ description: Design software boundaries, interfaces, seams, data flow, and trade
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.3.2"
 ---
 
 # Software Architecture
 
 Prefer deep modules: small stable interfaces hiding meaningful implementation complexity. Architecture should reduce coordination cost, not maximize layers.
+
+When an architecture-style or pattern selection is material, consult [the pattern decision guide](references/pattern-decision-guide.md). Establish domain constraints, measurable quality attributes and existing architecture first. Compare realistic alternatives with operational costs; do not force a named pattern without evidence. This guide may also support the upstream `grilling` and `grill-with-docs` interviews, but approved architecture remains owned by the project's architecture process.
 
 ## Workflow
 
@@ -20,7 +22,7 @@ Prefer deep modules: small stable interfaces hiding meaningful implementation co
 5. Separate transient transport from persistent source of truth. Operational state that must survive refresh/restart requires a canonical durable store or a reconstructable append-only history; in-memory state and disposable `/tmp` artifacts are not sufficient by themselves.
 6. Compare realistic alternatives and record the trade-off that selects one.
 7. Preserve established architecture unless evidence shows it blocks the requirement; avoid rewrite reflexes.
-8. Record material decisions in the project's existing ADR/architecture mechanism.
+8. Record material decisions in the project's existing ADR/architecture mechanism. When a documentation catalog is in scope, keep architecture, API/event schemas, deployment/recovery and security boundaries linked to the approved SRS/rules through `documentation-governance`; do not present design choices as product approval.
 
 ## Learned operating invariants
 

@@ -4,7 +4,7 @@ description: Select and coordinate the minimum evidence-gated engineering flow n
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.5.0"
+  version: "0.5.2"
 ---
 
 # Engineering Lifecycle
@@ -14,8 +14,8 @@ Use this as the coordinating engineering entry point when the correct path is no
 ## Workflow
 
 1. Classify the objective: decision, research, design, implementation, defect, review, integration, or continuity work.
-2. Inspect existing project truth before inventing process. Use `project-discovery` when context is incomplete.
-3. Resolve material uncertainty with `technical-research`; use `domain-modeling` when vocabulary or invariants are part of the uncertainty.
+2. Inspect existing project truth before inventing process. Use `project-discovery` when context is incomplete. For a new project, substantial feature, or documentation audit, select `documentation-governance` to inventory applicable artifacts and document authority before eliciting requirements; it supplies standards, not runtime coordination.
+3. Resolve material uncertainty with `technical-research`; use `domain-modeling` when vocabulary or invariants are part of the uncertainty. When product or engineering decisions require human clarification, select `grilling` / `grill-me`; select `grill-with-docs` for an interview that must produce verified persistent decision and glossary/ADR artifacts under `documentation-governance`. Keep the questioning, documentation and architecture skills distinct from the orchestrator's scheduling and execution policy.
 4. Require an implementable contract before substantial construction. Use `software-specification` when the acceptance boundary is not already explicit.
 5. For work larger than one safe execution unit, use `work-decomposition` to create an acyclic dependency graph and ready frontier.
 6. Use `software-architecture` for boundary, interface, data-flow, or structural decisions that materially affect multiple Work Units.

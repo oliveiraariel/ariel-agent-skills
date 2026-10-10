@@ -4,7 +4,7 @@ description: Compact current project state into a redacted, pointer-based handof
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Project Handoff
@@ -73,7 +73,7 @@ Older sections may remain for provenance, but if they contain now-obsolete claim
 - unresolved risks or assumptions;
 - exact next action and suggested skills/capabilities for the next agent.
 
-Reference specs, ADRs, plans, issues, diffs, and large documents by path or URL instead of duplicating them. Redact credentials, secrets, tokens, personal data, raw prompts, and unnecessary sensitive context.
+Reference specs, ADRs, plans, issues, diffs, and large documents by path or URL instead of duplicating them. When a documentation-governance manifest exists, link its authoritative version and list open decisions, stale documents, and unverified requirements without creating a second document index. Redact credentials, secrets, tokens, personal data, raw prompts, and unnecessary sensitive context.
 
 ## Learned continuity rules
 

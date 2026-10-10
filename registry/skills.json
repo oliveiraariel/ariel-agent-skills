@@ -19,7 +19,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.5.0",
+      "version": "0.5.1",
       "execution_profile": {
         "responsibility": "high",
         "model_tier_hint": "strong"
@@ -59,7 +59,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.2.0",
+      "version": "0.2.1",
       "execution_profile": {
         "responsibility": "adaptive",
         "model_tier_hint": "strong-when-material"
@@ -128,9 +128,39 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.1.0",
+      "version": "0.2.0",
       "evidence": [
         "domain-modeling/SKILL.md"
+      ]
+    },
+    {
+      "id": "documentation-governance",
+      "purpose": "Select, structure, audit, trace and reconcile authoritative software documentation artifacts proportionally to scope and risk without replacing their specialist producers.",
+      "capabilities": [
+        "documentation.governance"
+      ],
+      "inputs": [
+        "project objective",
+        "current repository/documentation evidence",
+        "approved decisions"
+      ],
+      "outputs": [
+        "artifact manifest",
+        "documentation plan",
+        "elicitation coverage",
+        "reconciliation findings",
+        "traceability gaps"
+      ],
+      "dependencies": [],
+      "compatible_agents": [],
+      "compatible_models": [],
+      "compatible_runtimes": [],
+      "version": "0.1.0",
+      "evidence": [
+        "documentation-governance/SKILL.md",
+        "documentation-governance/references/artifact-catalog.md",
+        "documentation-governance/references/elicitation-coverage.md",
+        "documentation-governance/references/artifact-contracts.md"
       ]
     },
     {
@@ -153,7 +183,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.1.0",
+      "version": "0.2.0",
       "evidence": [
         "software-specification/SKILL.md"
       ]
@@ -216,7 +246,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.3.0",
+      "version": "0.3.1",
       "execution_profile": {
         "responsibility": "high",
         "model_tier_hint": "strong"
@@ -290,7 +320,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.4.0",
+      "version": "0.4.1",
       "execution_profile": {
         "responsibility": "routine",
         "model_tier_hint": "economy-first-code-specialist-on-remediation"
@@ -478,7 +508,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.3.0",
+      "version": "0.3.1",
       "execution_profile": {
         "responsibility": "routine",
         "model_tier_hint": "economy"

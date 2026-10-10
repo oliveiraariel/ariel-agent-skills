@@ -4,7 +4,7 @@ description: Establish and audit a proportional, traceable software documentatio
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.1.0"
+  version: "0.1.1"
 ---
 
 # Documentation Governance
@@ -19,7 +19,7 @@ Read [the artifact catalog](references/artifact-catalog.md) before choosing deli
 2. Classify the work: greenfield, feature change, maintenance, migration, security-critical, regulated, or documentation reconciliation; assess *risk and complexity*, not only project size.
 3. Instantiate the **logical six-area catalog**. Each artifact is classified as essential information (E), conditional (C), or recommended (R); decide separately whether it is its own file/page, a section, generated evidence, or explicitly not applicable with rationale.
 4. Build a documentation plan/manifest: artifact ID, canonical path or URL, ownership, upstream input, downstream consumer, applicability trigger, lifecycle status, version/baseline, review requirement, and links to acceptance evidence. Record exceptions.
-5. Inspect existing evidence before asking anyone. For missing or ambiguous decisions, use `grilling`/`grill-me` if available, following the elicitation matrix: ask only the unblocked decision frontier, recommend grounded defaults, record answers and their target artifacts as decisions, and distinguish facts, assumptions, proposals, approvals, and blockers. Do not fabricate user decisions.
+5. Inspect existing evidence before asking anyone. For missing or ambiguous decisions, select `grilling` (or the user-facing `grill-me` alias), following the elicitation matrix: ask only the unblocked decision frontier, recommend grounded defaults, and distinguish facts, assumptions, proposals, approvals, and blockers. When the task includes durable documentation, use `grill-with-docs` to record answers in canonical locations and verify persistence. For architectural trade-offs, have the interview consult `software-architecture/references/pattern-decision-guide.md`; do not treat a technical recommendation as a business approval. Do not fabricate user decisions.
 6. Route production: `software-specification` owns detailed behavioral contracts and acceptance; `domain-modeling` owns vocabulary/invariants; `software-architecture` owns boundaries/contracts/ADRs; `security-review` investigates security threats; `testing` owns verification evidence. This skill owns catalog, placement, traceability, audit, and synchronization rules.
 7. Establish traceability for critical features: stakeholder outcome -> PRD/vision -> requirement -> business rule / scenario -> design/API/data -> implementation reference -> test/evidence. Use stable IDs and a canonical owner for each normative statement.
 8. Audit document-to-document and document-to-code drift against an *approved baseline*. Never silently promote implemented behavior into requirements, or replace a human-approved decision with stale documentation. Report conflicting authority and human decisions separately.

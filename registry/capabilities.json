@@ -18,6 +18,10 @@
       "description": "Build domain vocabulary, invariants, relationships, and scenario-tested models."
     },
     {
+      "id": "documentation.governance",
+      "description": "Govern proportional documentation artifacts, interview coverage, authority, traceability and reconciliation."
+    },
+    {
       "id": "specification.software",
       "description": "Produce implementable software specifications with acceptance criteria and non-goals."
     },

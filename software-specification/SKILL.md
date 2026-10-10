@@ -4,7 +4,7 @@ description: Turn product intent, project evidence, and domain decisions into an
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Software Specification
@@ -14,7 +14,7 @@ A specification is an **implementation and independent review contract**, not a 
 ## Entry
 
 1. Use `project-discovery` to locate the approved scope, baseline, existing PRD/vision, known requirements, business rules, domain model and relevant code/tests.
-2. If decisions are missing, ask only material unblocked questions, preferably with `grilling` and the documentation-governance elicitation matrix when accessible. Facts should be investigated; human decisions need explicit authority. Preserve every answer in a durable decision record or an approved artifact, never conversation alone.
+2. If decisions are missing, ask only material unblocked questions with `grilling` and the documentation-governance elicitation matrix when accessible. Use `grill-with-docs` where a writable canonical project is authorized and the interview itself must persist records. Facts should be investigated; human decisions need explicit authority. Preserve every answer in a durable decision record or an approved artifact, never conversation alone. For technical pattern choices, defer analysis to `software-architecture` and its pattern decision guide, after the governing RF/RNF and domain invariants are established.
 3. Distinguish **product intent** (Vision/PRD), **normative requirements** (SRS/ERS), **rules/invariants** (catalog or SRS section), and **solution design** (architecture, API, schema). A PRD is not mandatory and does not replace testable requirements.
 4. Specify only the approved scope. Unapproved recommendations remain `PROPOSED`; absent facts remain `OPEN`, not implied agreements.
 

@@ -4,12 +4,14 @@ description: Design software boundaries, interfaces, seams, data flow, and trade
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.3.1"
+  version: "0.3.2"
 ---
 
 # Software Architecture
 
 Prefer deep modules: small stable interfaces hiding meaningful implementation complexity. Architecture should reduce coordination cost, not maximize layers.
+
+When an architecture-style or pattern selection is material, consult [the pattern decision guide](references/pattern-decision-guide.md). Establish domain constraints, measurable quality attributes and existing architecture first. Compare realistic alternatives with operational costs; do not force a named pattern without evidence. This guide may also support the upstream `grilling` and `grill-with-docs` interviews, but approved architecture remains owned by the project's architecture process.
 
 ## Workflow
 

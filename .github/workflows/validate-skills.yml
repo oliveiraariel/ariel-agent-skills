@@ -33,6 +33,9 @@ jobs:
       - name: Validate documentation governance catalog
         run: python3 scripts/validate_documentation_governance.py
 
+      - name: Validate interview and architecture integration
+        run: python3 scripts/validate_interview_integration.py
+
       - name: Validate discovered skill validators
         shell: bash
         run: |

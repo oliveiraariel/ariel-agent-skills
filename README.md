@@ -15,6 +15,8 @@ technical-research / domain-modeling (when needed)
   ↓
 documentation-governance (applicable documentation/elicitation contract)
   ↓
+grilling / grill-with-docs (only when decisions are unresolved)
+  ↓
 software-specification
   ↓
 work-decomposition
@@ -36,14 +38,17 @@ project-handoff when crossing an execution/session boundary
 
 | Skill | Primary role | Status |
 |---|---|---|
-| [engineering-lifecycle](./engineering-lifecycle/) | Select and coordinate the engineering flow, including terminal obligations and recovery-aware continuity | `0.5.1` |
+| [engineering-lifecycle](./engineering-lifecycle/) | Select and coordinate the engineering flow, including terminal obligations and recovery-aware continuity | `0.5.2` |
 | [project-discovery](./project-discovery/) | Understand the real project, repository root, runtime, and environment before planning | `0.2.1` |
 | [technical-research](./technical-research/) | Evidence-backed technical investigation with authority-aware runtime research | `0.2.0` |
 | [domain-modeling](./domain-modeling/) | Vocabulary, invariants, scenarios, and domain decisions | `0.2.0` |
-| [documentation-governance](./documentation-governance/) | Proportional artifact catalog, elicitation coverage, traceability, authority and audits | `0.1.0` |
-| [software-specification](./software-specification/) | Turn intent into an implementable contract | `0.2.0` |
+| [documentation-governance](./documentation-governance/) | Proportional artifact catalog, elicitation coverage, traceability, authority and audits | `0.1.1` |
+| [grilling](./grilling/) | Evidence-led and dependency-ordered decision elicitation; architecture and documentation guide selection when relevant | `1.0.0` |
+| [grill-me](./grill-me/) | User-facing, runtime-neutral entry point to grilling | `1.0.0` |
+| [grill-with-docs](./grill-with-docs/) | Elicit and persist approved decisions, glossary/ADR records and document-ready handoffs | `1.0.0` |
+| [software-specification](./software-specification/) | Turn intent into an implementable contract | `0.2.1` |
 | [work-decomposition](./work-decomposition/) | Build a dependency graph, executable frontier, remediation work, and bounded replanning | `0.4.0` |
-| [software-architecture](./software-architecture/) | Boundaries, durable state, versioned contracts, correlation, and ADR-grade decisions | `0.3.1` |
+| [software-architecture](./software-architecture/) | Boundaries, durable state, versioned contracts, correlation, and ADR-grade decisions | `0.3.2` |
 | [implementation](./implementation/) | Build scoped vertical slices and bounded remediations | `0.3.0` |
 | [testing](./testing/) | Risk-based verification, recovery/contract checks, and regression protection | `0.4.1` |
 | [debugging](./debugging/) | Recovery-aware diagnosis, failure classification, and regression-safe fixes | `0.3.0` |
@@ -53,6 +58,10 @@ project-handoff when crossing an execution/session boundary
 | [project-handoff](./project-handoff/) | Recovery-safe continuity across agents/sessions | `0.3.1` |
 | [web-frontend-design](./web-frontend-design/) | Framework-neutral web UI/UX, accessibility, and semantically truthful operational dashboards | `0.3.0` |
 | [adaptive-orchestrator-bridge](./adaptive-orchestrator-bridge/) | Thin OpenClaw → Adaptive invocation bridge that preserves skills and incomplete/recovery state | `0.4.0` |
+
+### Interview and architecture scope
+
+The three interview skills were adapted into this repository from `oliveiraariel/mattpocock-skills-fork`: `grilling` is the decision-tree engine, `grill-me` is a thin user entry point, and `grill-with-docs` persists decisions in a project's existing canonical documentation. They no longer assume a provider-specific Skill tool. For software, interviews consult the [documentation catalog and elicitation coverage](./documentation-governance/references/elicitation-coverage.md), and architecture choices consult [the architectural pattern decision guide](./software-architecture/references/pattern-decision-guide.md). An interview does not substitute for requirements approval, architecture review or verification.
 
 ### Web frontend scope
 
@@ -91,6 +100,7 @@ Run:
 
 ```bash
 python3 scripts/validate_ecosystem.py
+python3 scripts/validate_interview_integration.py
 python3 web-frontend-design/scripts/validate_skill.py
 ```
 

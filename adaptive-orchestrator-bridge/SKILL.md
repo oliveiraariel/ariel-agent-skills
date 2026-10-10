@@ -20,22 +20,24 @@ Use this bridge when the user explicitly asks to run, use, delegate to, or execu
 
 Do not use it merely because the Adaptive repository is readable.
 
-Choose the Adaptive entrypoint explicitly according to the work:
+Choose the Adaptive entrypoint explicitly according to the work. Work-Unit
+count, worker count, execution mode, and persistence are separate dimensions:
 
-- **bounded one-Work-Unit task** → add `--single-unit`;
-- **non-trivial project work that can benefit from decomposition, dependencies, multiple specialists, parallel execution, fan-in, recovery, or replanning** → add `--multi-agent` so the helper invokes `adaptive-orchestrator orchestrate`.
+- **bounded one-Work-Unit task that does not need durable continuity or recovery** → add `--single-unit`;
+- **one Work Unit or one executor that still needs checkpointing, controller supervision, recovery, or resume** → add `--durable-single-worker`; it invokes `adaptive-orchestrator orchestrate --max-concurrency 1`;
+- **project work that can benefit from decomposition, dependencies, multiple specialists, parallel execution, fan-in, recovery, or replanning** → add `--multi-agent` so the helper invokes `adaptive-orchestrator orchestrate`.
 
 The bridge intentionally has **no implicit default execution mode**. If neither flag is supplied it refuses the invocation instead of silently degrading a project request into a fresh one-Work-Unit `run`.
 
 Do not manually simulate a multiagent plan in this skill. In multi-agent mode the Adaptive engine owns the Work Graph, ready frontier, worker count, skill selection, model routing, concurrency, continuous slot replenishment, evaluation, fan-in, recovery, and bounded replanning.
 
-For one user request that is clearly project work, invoke the bridge **exactly once** with `--multi-agent`. Do not split phases such as discovery, implementation, tests, packaging, or handoff into separate top-level bridge invocations; those phases belong inside one Adaptive Work Graph. A handoff-only request is a legitimate `--single-unit` task when it truly asks only for one bounded artifact and no project mutation beyond that artifact.
+For one user request that is clearly project work, invoke the bridge **exactly once** with `--multi-agent` or `--durable-single-worker`. Do not split phases such as discovery, implementation, tests, packaging, or handoff into separate top-level bridge invocations; those phases belong inside one Adaptive Work Graph. A handoff-only request is a legitimate `--single-unit` task when it truly asks only for one bounded artifact, no project mutation beyond that artifact, and no durable continuity requirement.
 
 ## Invocation
 
 Invoke the helper at `{baseDir}/scripts/invoke.py` on the host. Pass only the actual delegated work as `--objective`; do not include outer instructions such as “use Adaptive” in the nested objective. Use `--agent main` unless the user or project context identifies another OpenClaw agent/workspace that owns the target project.
 
-**Mandatory for `--multi-agent`:** always pass `--project-root` with the explicit, existing **absolute path of the target project directory**. Do not omit this option, infer it from the current shell directory, or attempt to extract it from the natural-language objective. Without a project root the Bridge cannot prove durable admission or query the same project's authoritative checkpoint. The helper now refuses an invocation missing this argument with `BRIDGE_PROJECT_ROOT_REQUIRED` (or `BRIDGE_PROJECT_ROOT_INVALID` for a nonexistent directory). Never work around this guard by bypassing the Bridge.
+**Mandatory for `--multi-agent` and `--durable-single-worker`:** always pass `--project-root` with the explicit, existing **absolute path of the target project directory**. Do not omit this option, infer it from the current shell directory, or attempt to extract it from the natural-language objective. Without a project root the Bridge cannot prove durable admission or query the same project's authoritative checkpoint. The helper now refuses an invocation missing this argument with `BRIDGE_PROJECT_ROOT_REQUIRED` (or `BRIDGE_PROJECT_ROOT_INVALID` for a nonexistent directory). Never work around this guard by bypassing the Bridge.
 
 ### Bounded single-unit example
 
@@ -43,7 +45,8 @@ Invoke the helper at `{baseDir}/scripts/invoke.py` on the host. Pass only the ac
 python3 "{baseDir}/scripts/invoke.py" \
   --single-unit \
   --objective "Analyze this project and return the next safe engineering step." \
-  --agent main
+  --agent main \
+  --accept "next safe engineering step delivered"
 ```
 
 ### Multiagent project example
@@ -58,6 +61,18 @@ python3 "{baseDir}/scripts/invoke.py" \
 ```
 
 The helper removes its private `--multi-agent` selector before invoking Adaptive and automatically appends a recursion-guard constraint. Each worker delegated by Adaptive is already under orchestrator control and must not invoke this bridge again.
+
+### Durable single-worker example
+
+```bash
+python3 "{baseDir}/scripts/invoke.py" \
+  --durable-single-worker \
+  --objective "Implement the authorized continuity-sensitive project change." \
+  --agent main \
+  --project-root "/absolute/path/to/target-project"
+```
+
+This is still project orchestration: Adaptive materializes a checkpoint, starts its guardian, and can resume the same orchestration identity. It only constrains useful worker parallelism to one; it does not downgrade the request to `run`.
 
 ## Observability boundary
 

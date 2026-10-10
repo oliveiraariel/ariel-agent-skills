@@ -4,7 +4,7 @@ description: Build and sharpen a software domain model by testing vocabulary, in
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Domain Modeling
@@ -17,7 +17,7 @@ Model the problem language before encoding accidental database or framework stru
 2. Challenge synonyms and overloaded terms until each important word has one operational meaning.
 3. Write invariants and lifecycle rules in domain language.
 4. Stress-test the model with normal, boundary, invalid, deletion, concurrency, and recovery scenarios.
-5. Record unresolved decisions separately from established domain truth.
+5. Record unresolved decisions separately from established domain truth. Map approved rules/invariants to stable IDs and the existing canonical rule catalog (or SRS section); update glossary entries without duplicating normative rules in diagrams or ADRs.
 6. Update existing domain/context artifacts and ADRs rather than forking the vocabulary into a new document set.
 
 ## Completion gate

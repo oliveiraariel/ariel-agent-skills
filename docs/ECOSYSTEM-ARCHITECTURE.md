@@ -43,6 +43,10 @@ Examples:
 
 The skill should therefore be selected for relevant web frontend capabilities regardless of whether the project uses React, Vue, Angular, Svelte, server-rendered templates, plain HTML/CSS/JavaScript, WordPress, or another web stack. Framework/runtime engineering concerns that are outside visual/interaction design remain the responsibility of `software-architecture`, `implementation`, `testing`, `debugging`, `code-review`, and other engineering skills.
 
+## Documentation governance boundary
+
+`documentation-governance` owns the **artifact system**, applicability, source precedence, interview coverage, and audit/traceability; `software-specification` owns precise behavior and acceptance, `domain-modeling` owns domain vocabulary/invariants, `software-architecture` owns design decisions/contracts, and `testing` owns executed evidence. PRD/vision expresses product direction and is not a mandatory implementable contract. The logical artifact catalog is distinct from files and must be tailored to risk. An interview answer is a proposed or approved decision only when written to a durable canonical destination; it is not automatically implementation truth.
+
 ## Runtime neutrality
 
 No core skill assumes Claude Code, Codex, OpenClaw, a specific programming language, issue tracker, or deployment platform. Runtime adapters may map generic actions such as search, edit, test, delegate, or review onto the available toolset.

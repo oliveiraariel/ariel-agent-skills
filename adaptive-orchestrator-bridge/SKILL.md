@@ -226,6 +226,45 @@ Project-mode Adaptive execution starts a detached per-orchestration supervisor g
 
 Questions such as “o Recovery Loop foi acionado?”, “em que etapa está o Recovery Loop?”, “o que ele aprendeu?” or “pause/retome o Recovery Loop” refer to the state of that Adaptive lifecycle. The bridge must surface the authoritative Adaptive state and must not emulate a conversational retry loop locally.
 
+## Governed intervention and owner-direct takeover
+
+The user may explicitly override the automatic recovery strategy and order
+**direct execution by the coordinator** at any time. This is not a prohibited
+fallback, and it does not require exhausting the normal retry budget.
+The bridge MUST forward this request to the **existing** Adaptive orchestration
+through `takeover-work-unit`, never create a new top-level orchestration.
+
+1. Resolve the exact project root, orchestration id and Work Unit id from
+   authoritative `project-status` data; ask for an identifier only if it cannot
+   be established. Do not guess.
+2. For user-authorized direct execution invoke:
+
+```bash
+python3 "{baseDir}/scripts/invoke.py" takeover-work-unit \\
+  --project-root "/absolute/project/root" \\
+  --orchestration-id "existing-orchestration-id" \\
+  --work-unit-id "existing-work-unit-id" \\
+  --mode direct \\
+  --owner-agent main \\
+  --actor operator \\
+  --reason "User requested immediate owner completion" \\
+  --authorize
+```
+
+Use the actual coordinator agent id instead of `main` if configured differently.
+The bridge forwards the command; only the orchestrator may cancel/fence the
+old executor, reclaim Work Unit ownership and dispatch the owner attempt. The
+`REQUESTED` response is **not a claim that work was finished**. Report
+`QUIESCING` if termination is unconfirmed. Direct attempts still require
+normal worker protocol publication and independent acceptance when configured.
+
+For a replacement agent rather than direct execution use `--mode replacement`
+and omit `--owner-agent`. No worker should invoke this command on its own to
+escalate privileges; commands reflect the user's authorization or an explicit
+orchestration policy. The requested target Work Unit and authorized scope are
+unchanged. Terminal projects still require the supported `continue-project`
+path; do not rewrite terminal history.
+
 ## Persistent recovery boundary
 
 When Adaptive enables persistent investigation/recovery, the bridge remains a transport boundary.

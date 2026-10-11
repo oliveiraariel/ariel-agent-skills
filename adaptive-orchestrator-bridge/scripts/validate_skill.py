@@ -43,8 +43,13 @@ def main() -> None:
         raise SystemExit("bridge invoker must not execute through a shell")
     if "RECURSION_GUARD" not in source or "--constraint" not in source:
         raise SystemExit("bridge invoker must append a recursion-guard constraint")
-    if "MULTI_AGENT_FLAG" not in source or '"orchestrate" if multi_agent else "run"' not in source:
-        raise SystemExit("bridge invoker must route multiagent work to orchestrate")
+    if (
+        "MULTI_AGENT_FLAG" not in source
+        or "DURABLE_SINGLE_WORKER_FLAG" not in source
+        or '"orchestrate" if multi_agent or durable_single_worker else "run"' not in source
+        or '"takeover-work-unit"' not in source
+    ):
+        raise SystemExit("bridge invoker must route multiagent, durable and takeover modes correctly")
     if "PROTOCOL_NAME" not in source or "PROTOCOL_VERSION" not in source:
         raise SystemExit("bridge diagnostics must expose the active Adaptive worker protocol")
 

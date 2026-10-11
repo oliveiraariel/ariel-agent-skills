@@ -6,6 +6,13 @@ Thin OpenClaw-facing bridge for invoking the external `adaptive-ai-orchestrator`
 
 This skill does not implement orchestration logic. It delegates to the Adaptive CLI and returns its structured result.
 
+For a continuity-sensitive development task that has one Work Unit or one
+executor, invoke the bridge with `--durable-single-worker` and an explicit
+`--project-root`. The helper delegates to `orchestrate --max-concurrency 1`,
+so checkpointing, supervision, recovery, and resume remain available. Use
+`--single-unit` only for genuinely bounded work that does not require those
+durable mechanisms.
+
 ## Resolution order
 
 `adaptive-orchestrator-bridge/scripts/invoke.py` resolves the engine in this order:
@@ -37,6 +44,7 @@ Do not put Gateway credentials in `SKILL.md`, prompts, shell arguments, or repos
 
 ```bash
 python3 adaptive-orchestrator-bridge/scripts/invoke.py \
+  --single-unit \
   --objective "Respond exactly with BRIDGE_OK." \
   --agent main \
   --accept BRIDGE_OK

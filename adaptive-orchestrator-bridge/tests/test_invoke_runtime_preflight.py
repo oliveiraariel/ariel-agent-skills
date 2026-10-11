@@ -589,6 +589,21 @@ def test_bridge_routes_resume_project_as_recovery_management_command(
     assert "--constraint" not in captured["guarded_arguments"]
 
 
+def test_bridge_routes_continue_project_as_management_command(monkeypatch, tmp_path):
+    captured = {}
+    monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", "/root")
+    monkeypatch.setattr(bridge, "_resolve_explicit_root", lambda root: ([sys.executable], {}))
+    monkeypatch.setattr(bridge, "_runtime_preflight", lambda command, environment: {"ok": True, "found": {name: "/module.py" for name in bridge.RUNTIME_MODULES}})
+    monkeypatch.setattr(bridge, "_run_adaptive_with_admission_retry", lambda **kwargs: captured.update(kwargs) or 0)
+
+    assert bridge.main([
+        "continue-project", "--predecessor-orchestration-id", "orch-1",
+        "--clarification", "approved rule", "--project-root", str(tmp_path),
+    ]) == 0
+    assert captured["adaptive_command"] == "continue-project"
+    assert "--constraint" not in captured["guarded_arguments"]
+
+
 
 def test_bridge_routes_project_status_without_worker_constraint(
     monkeypatch, tmp_path
@@ -740,11 +755,91 @@ def test_bridge_routes_explicit_single_unit(monkeypatch):
     )
 
     assert bridge.main(
-        ["--single-unit", "--objective", "write one handoff"]
+        [
+            "--single-unit", "--objective", "write one handoff",
+            "--accept", "handoff delivered",
+        ]
     ) == 0
     assert captured["adaptive_command"] == "run"
     assert bridge.SINGLE_UNIT_FLAG not in captured["guarded_arguments"]
     assert "--constraint" in captured["guarded_arguments"]
+
+
+def test_single_unit_requires_explicit_semantic_acceptance(monkeypatch, capsys):
+    monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", "/root")
+    monkeypatch.setattr(
+        bridge,
+        "_resolve_explicit_root",
+        lambda root: ([sys.executable, "-m", "adaptive_orchestrator"], {}),
+    )
+    monkeypatch.setattr(bridge, "_runtime_preflight", lambda *args: {"ok": True})
+    monkeypatch.setattr(
+        bridge,
+        "_run_adaptive_with_admission_retry",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("must not launch")),
+    )
+
+    assert bridge.main(["--single-unit", "--objective", "write one handoff"]) == 2
+    assert "BRIDGE_SINGLE_WORK_UNIT_ACCEPTANCE_REQUIRED" in capsys.readouterr().err
+
+
+def test_durable_single_worker_routes_to_orchestrate_with_one_worker(monkeypatch, tmp_path):
+    command = [sys.executable, "-m", "adaptive_orchestrator"]
+    captured = {}
+
+    monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", "/root")
+    monkeypatch.setattr(
+        bridge,
+        "_resolve_explicit_root",
+        lambda root: (command, {"PYTHONPATH": "/adaptive/src"}),
+    )
+    monkeypatch.setattr(
+        bridge,
+        "_runtime_preflight",
+        lambda command, environment: {
+            "ok": True,
+            "found": {name: "/module.py" for name in bridge.RUNTIME_MODULES},
+        },
+    )
+    monkeypatch.setattr(
+        bridge,
+        "_run_adaptive_with_admission_retry",
+        lambda **kwargs: captured.update(kwargs) or 0,
+    )
+
+    assert bridge.main([
+        "--durable-single-worker",
+        "--objective", "Implement one continuity-sensitive change.",
+        "--project-root", str(tmp_path),
+    ]) == 0
+    assert captured["adaptive_command"] == "orchestrate"
+    guarded = captured["guarded_arguments"]
+    assert bridge.DURABLE_SINGLE_WORKER_FLAG not in guarded
+    assert guarded[guarded.index("--max-concurrency") + 1] == "1"
+    assert "--constraint" in guarded
+
+
+def test_durable_single_worker_rejects_conflicting_concurrency(monkeypatch, tmp_path, capsys):
+    monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", "/root")
+    monkeypatch.setattr(
+        bridge,
+        "_resolve_explicit_root",
+        lambda root: ([sys.executable, "-m", "adaptive_orchestrator"], {}),
+    )
+    monkeypatch.setattr(bridge, "_runtime_preflight", lambda *args: {"ok": True})
+    monkeypatch.setattr(
+        bridge,
+        "_run_adaptive_with_admission_retry",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("must not launch")),
+    )
+
+    assert bridge.main([
+        "--durable-single-worker",
+        "--objective", "Implement one continuity-sensitive change.",
+        "--project-root", str(tmp_path),
+        "--max-concurrency", "2",
+    ]) == 2
+    assert "BRIDGE_DURABLE_SINGLE_WORKER_CONCURRENCY_CONFLICT" in capsys.readouterr().err
 
 
 def test_multi_agent_refuses_missing_project_root_without_dispatch(monkeypatch, capsys):

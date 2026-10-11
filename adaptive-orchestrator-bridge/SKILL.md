@@ -20,22 +20,24 @@ Use this bridge when the user explicitly asks to run, use, delegate to, or execu
 
 Do not use it merely because the Adaptive repository is readable.
 
-Choose the Adaptive entrypoint explicitly according to the work:
+Choose the Adaptive entrypoint explicitly according to the work. Work-Unit
+count, worker count, execution mode, and persistence are separate dimensions:
 
-- **bounded one-Work-Unit task** → add `--single-unit`;
-- **non-trivial project work that can benefit from decomposition, dependencies, multiple specialists, parallel execution, fan-in, recovery, or replanning** → add `--multi-agent` so the helper invokes `adaptive-orchestrator orchestrate`.
+- **bounded one-Work-Unit task that does not need durable continuity or recovery** → add `--single-unit`;
+- **one Work Unit or one executor that still needs checkpointing, controller supervision, recovery, or resume** → add `--durable-single-worker`; it invokes `adaptive-orchestrator orchestrate --max-concurrency 1`;
+- **project work that can benefit from decomposition, dependencies, multiple specialists, parallel execution, fan-in, recovery, or replanning** → add `--multi-agent` so the helper invokes `adaptive-orchestrator orchestrate`.
 
 The bridge intentionally has **no implicit default execution mode**. If neither flag is supplied it refuses the invocation instead of silently degrading a project request into a fresh one-Work-Unit `run`.
 
 Do not manually simulate a multiagent plan in this skill. In multi-agent mode the Adaptive engine owns the Work Graph, ready frontier, worker count, skill selection, model routing, concurrency, continuous slot replenishment, evaluation, fan-in, recovery, and bounded replanning.
 
-For one user request that is clearly project work, invoke the bridge **exactly once** with `--multi-agent`. Do not split phases such as discovery, implementation, tests, packaging, or handoff into separate top-level bridge invocations; those phases belong inside one Adaptive Work Graph. A handoff-only request is a legitimate `--single-unit` task when it truly asks only for one bounded artifact and no project mutation beyond that artifact.
+For one user request that is clearly project work, invoke the bridge **exactly once** with `--multi-agent` or `--durable-single-worker`. Do not split phases such as discovery, implementation, tests, packaging, or handoff into separate top-level bridge invocations; those phases belong inside one Adaptive Work Graph. A handoff-only request is a legitimate `--single-unit` task when it truly asks only for one bounded artifact, no project mutation beyond that artifact, and no durable continuity requirement.
 
 ## Invocation
 
 Invoke the helper at `{baseDir}/scripts/invoke.py` on the host. Pass only the actual delegated work as `--objective`; do not include outer instructions such as “use Adaptive” in the nested objective. Use `--agent main` unless the user or project context identifies another OpenClaw agent/workspace that owns the target project.
 
-**Mandatory for `--multi-agent`:** always pass `--project-root` with the explicit, existing **absolute path of the target project directory**. Do not omit this option, infer it from the current shell directory, or attempt to extract it from the natural-language objective. Without a project root the Bridge cannot prove durable admission or query the same project's authoritative checkpoint. The helper now refuses an invocation missing this argument with `BRIDGE_PROJECT_ROOT_REQUIRED` (or `BRIDGE_PROJECT_ROOT_INVALID` for a nonexistent directory). Never work around this guard by bypassing the Bridge.
+**Mandatory for `--multi-agent` and `--durable-single-worker`:** always pass `--project-root` with the explicit, existing **absolute path of the target project directory**. Do not omit this option, infer it from the current shell directory, or attempt to extract it from the natural-language objective. Without a project root the Bridge cannot prove durable admission or query the same project's authoritative checkpoint. The helper now refuses an invocation missing this argument with `BRIDGE_PROJECT_ROOT_REQUIRED` (or `BRIDGE_PROJECT_ROOT_INVALID` for a nonexistent directory). Never work around this guard by bypassing the Bridge.
 
 ### Bounded single-unit example
 
@@ -43,7 +45,8 @@ Invoke the helper at `{baseDir}/scripts/invoke.py` on the host. Pass only the ac
 python3 "{baseDir}/scripts/invoke.py" \
   --single-unit \
   --objective "Analyze this project and return the next safe engineering step." \
-  --agent main
+  --agent main \
+  --accept "next safe engineering step delivered"
 ```
 
 ### Multiagent project example
@@ -58,6 +61,18 @@ python3 "{baseDir}/scripts/invoke.py" \
 ```
 
 The helper removes its private `--multi-agent` selector before invoking Adaptive and automatically appends a recursion-guard constraint. Each worker delegated by Adaptive is already under orchestrator control and must not invoke this bridge again.
+
+### Durable single-worker example
+
+```bash
+python3 "{baseDir}/scripts/invoke.py" \
+  --durable-single-worker \
+  --objective "Implement the authorized continuity-sensitive project change." \
+  --agent main \
+  --project-root "/absolute/path/to/target-project"
+```
+
+This is still project orchestration: Adaptive materializes a checkpoint, starts its guardian, and can resume the same orchestration identity. It only constrains useful worker parallelism to one; it does not downgrade the request to `run`.
 
 ## Observability boundary
 
@@ -144,6 +159,15 @@ project-status --orchestration-id <exact-id> --project-root <project-root>
 
 before producing any user-visible terminal conclusion. If that status is non-terminal, use the same orchestration's targeted supervisor/resume path. Do not use the global supervisor merely to discover the state of one known orchestration.
 
+For a terminal `PARTIAL` checkpoint that has received a new governed human
+clarification, do not edit the predecessor checkpoint or start an unrelated
+fresh project. Forward the clarification through the Adaptive management
+command `continue-project --predecessor-orchestration-id <id> --clarification
+<text> --project-root <root>`. It creates an idempotent linked successor with
+only unfinished Work Units; then use its returned targeted `resume-project`
+command. This command is available only when the installed Adaptive runtime
+supports it.
+
 ## Result and recovery semantics
 
 ### Single-unit mode
@@ -201,6 +225,45 @@ A normal task does not require the user to say “use the Recovery Loop”. In o
 Project-mode Adaptive execution starts a detached per-orchestration supervisor guardian by default. If the launching OpenClaw/tool session disappears after durable admission, that is not a reason to ask the user for a direct fallback or to abandon the objective: the guardian reconciles controller liveness and resumes the same Adaptive orchestration when needed. Completion of one recovery attempt is not closure of the Recovery Loop; closure follows the original objective or a governed terminal stop.
 
 Questions such as “o Recovery Loop foi acionado?”, “em que etapa está o Recovery Loop?”, “o que ele aprendeu?” or “pause/retome o Recovery Loop” refer to the state of that Adaptive lifecycle. The bridge must surface the authoritative Adaptive state and must not emulate a conversational retry loop locally.
+
+## Governed intervention and owner-direct takeover
+
+The user may explicitly override the automatic recovery strategy and order
+**direct execution by the coordinator** at any time. This is not a prohibited
+fallback, and it does not require exhausting the normal retry budget.
+The bridge MUST forward this request to the **existing** Adaptive orchestration
+through `takeover-work-unit`, never create a new top-level orchestration.
+
+1. Resolve the exact project root, orchestration id and Work Unit id from
+   authoritative `project-status` data; ask for an identifier only if it cannot
+   be established. Do not guess.
+2. For user-authorized direct execution invoke:
+
+```bash
+python3 "{baseDir}/scripts/invoke.py" takeover-work-unit \\
+  --project-root "/absolute/project/root" \\
+  --orchestration-id "existing-orchestration-id" \\
+  --work-unit-id "existing-work-unit-id" \\
+  --mode direct \\
+  --owner-agent main \\
+  --actor operator \\
+  --reason "User requested immediate owner completion" \\
+  --authorize
+```
+
+Use the actual coordinator agent id instead of `main` if configured differently.
+The bridge forwards the command; only the orchestrator may cancel/fence the
+old executor, reclaim Work Unit ownership and dispatch the owner attempt. The
+`REQUESTED` response is **not a claim that work was finished**. Report
+`QUIESCING` if termination is unconfirmed. Direct attempts still require
+normal worker protocol publication and independent acceptance when configured.
+
+For a replacement agent rather than direct execution use `--mode replacement`
+and omit `--owner-agent`. No worker should invoke this command on its own to
+escalate privileges; commands reflect the user's authorization or an explicit
+orchestration policy. The requested target Work Unit and authorized scope are
+unchanged. Terminal projects still require the supported `continue-project`
+path; do not rewrite terminal history.
 
 ## Persistent recovery boundary
 

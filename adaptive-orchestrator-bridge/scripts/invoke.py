@@ -25,6 +25,7 @@ RECURSION_GUARD = (
 )
 MULTI_AGENT_FLAG = "--multi-agent"
 SINGLE_UNIT_FLAG = "--single-unit"
+DURABLE_SINGLE_WORKER_FLAG = "--durable-single-worker"
 RUNTIME_MODULES = ("adaptive_orchestrator", "jsonschema", "websockets", "cryptography")
 DURABLE_ADMISSION_NOT_MATERIALIZED = 125
 ORCHESTRATION_ID_ALREADY_ADMITTED = 124
@@ -174,6 +175,17 @@ def _argument_value(arguments: list[str], name: str) -> str | None:
             value = argument.split("=", 1)[1].strip()
             return value or None
     return None
+
+
+def _has_nonempty_option(arguments: list[str], name: str) -> bool:
+    """Recognize a repeatable CLI option without changing its ordering."""
+    for index, argument in enumerate(arguments):
+        if argument == name:
+            if index + 1 < len(arguments) and arguments[index + 1].strip():
+                return True
+        elif argument.startswith(name + "=") and argument.split("=", 1)[1].strip():
+            return True
+    return False
 
 
 def _checkpoint_path(project_root: Path, orchestration_id: str) -> Path:
@@ -681,15 +693,17 @@ def main(argv: list[str] | None = None) -> int:
 
     multi_agent = MULTI_AGENT_FLAG in arguments
     single_unit = SINGLE_UNIT_FLAG in arguments
+    durable_single_worker = DURABLE_SINGLE_WORKER_FLAG in arguments
     arguments = [
         argument
         for argument in arguments
-        if argument not in {MULTI_AGENT_FLAG, SINGLE_UNIT_FLAG}
+        if argument
+        not in {MULTI_AGENT_FLAG, SINGLE_UNIT_FLAG, DURABLE_SINGLE_WORKER_FLAG}
     ]
-    if multi_agent and single_unit:
+    if sum((multi_agent, single_unit, durable_single_worker)) > 1:
         print(
             "BRIDGE_EXECUTION_MODE_CONFLICT: choose exactly one of "
-            "--multi-agent or --single-unit.",
+            "--multi-agent, --durable-single-worker, or --single-unit.",
             file=sys.stderr,
         )
         return 2
@@ -698,6 +712,8 @@ def main(argv: list[str] | None = None) -> int:
         "dispatch",
         "wait",
         "resume-project",
+        "continue-project",
+        "takeover-work-unit",
         "pause-project",
         "project-status",
         "supervise-projects",
@@ -708,25 +724,50 @@ def main(argv: list[str] | None = None) -> int:
         else None
     )
     if explicit_command:
-        if multi_agent or single_unit:
+        if multi_agent or single_unit or durable_single_worker:
             print(
                 "BRIDGE_EXECUTION_MODE_CONFLICT: management commands must not "
-                "include --multi-agent or --single-unit.",
+                "include an execution-mode selector.",
                 file=sys.stderr,
             )
             return 2
         adaptive_command = explicit_command
         arguments = arguments[1:]
     else:
-        if not multi_agent and not single_unit:
+        if not multi_agent and not single_unit and not durable_single_worker:
             print(
-                "BRIDGE_EXECUTION_MODE_REQUIRED: choose --multi-agent for one "
-                "durable project orchestration or --single-unit for one bounded "
-                "Work Unit. The bridge will not silently default to run.",
+                "BRIDGE_EXECUTION_MODE_REQUIRED: choose --multi-agent for a "
+                "durable project, --durable-single-worker for durable "
+                "single-worker execution, or --single-unit for one bounded Work "
+                "Unit. The bridge will not silently default to run.",
                 file=sys.stderr,
             )
             return 2
-        adaptive_command = "orchestrate" if multi_agent else "run"
+        adaptive_command = (
+            "orchestrate" if multi_agent or durable_single_worker else "run"
+        )
+
+    if durable_single_worker:
+        requested_concurrency = _argument_value(arguments, "--max-concurrency")
+        if requested_concurrency not in {None, "1"}:
+            print(
+                "BRIDGE_DURABLE_SINGLE_WORKER_CONCURRENCY_CONFLICT: "
+                "--durable-single-worker requires --max-concurrency 1.",
+                file=sys.stderr,
+            )
+            return 2
+        if requested_concurrency is None:
+            arguments.extend(("--max-concurrency", "1"))
+
+    if single_unit and not _has_nonempty_option(arguments, "--accept"):
+        print(
+            "BRIDGE_SINGLE_WORK_UNIT_ACCEPTANCE_REQUIRED: --single-unit "
+            "requires a literal --accept criterion; use "
+            "--durable-single-worker or --multi-agent when continuity is "
+            "required.",
+            file=sys.stderr,
+        )
+        return 2
 
     # A durable project orchestration must have an explicit, verified project
     # root. Otherwise the Adaptive CLI can use an implicit cwd while the Bridge
@@ -736,7 +777,7 @@ def main(argv: list[str] | None = None) -> int:
         project_root = _project_root_from_arguments(arguments)
         if project_root is None:
             print(
-                "BRIDGE_PROJECT_ROOT_REQUIRED: --multi-agent requires an "
+                "BRIDGE_PROJECT_ROOT_REQUIRED: durable project execution requires an "
                 "explicit --project-root <absolute-project-path> to verify "
                 "durable admission and authoritative project status.",
                 file=sys.stderr,

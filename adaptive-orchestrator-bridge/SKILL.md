@@ -159,6 +159,15 @@ project-status --orchestration-id <exact-id> --project-root <project-root>
 
 before producing any user-visible terminal conclusion. If that status is non-terminal, use the same orchestration's targeted supervisor/resume path. Do not use the global supervisor merely to discover the state of one known orchestration.
 
+For a terminal `PARTIAL` checkpoint that has received a new governed human
+clarification, do not edit the predecessor checkpoint or start an unrelated
+fresh project. Forward the clarification through the Adaptive management
+command `continue-project --predecessor-orchestration-id <id> --clarification
+<text> --project-root <root>`. It creates an idempotent linked successor with
+only unfinished Work Units; then use its returned targeted `resume-project`
+command. This command is available only when the installed Adaptive runtime
+supports it.
+
 ## Result and recovery semantics
 
 ### Single-unit mode

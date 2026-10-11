@@ -589,6 +589,21 @@ def test_bridge_routes_resume_project_as_recovery_management_command(
     assert "--constraint" not in captured["guarded_arguments"]
 
 
+def test_bridge_routes_continue_project_as_management_command(monkeypatch, tmp_path):
+    captured = {}
+    monkeypatch.setenv("ADAPTIVE_ORCHESTRATOR_ROOT", "/root")
+    monkeypatch.setattr(bridge, "_resolve_explicit_root", lambda root: ([sys.executable], {}))
+    monkeypatch.setattr(bridge, "_runtime_preflight", lambda command, environment: {"ok": True, "found": {name: "/module.py" for name in bridge.RUNTIME_MODULES}})
+    monkeypatch.setattr(bridge, "_run_adaptive_with_admission_retry", lambda **kwargs: captured.update(kwargs) or 0)
+
+    assert bridge.main([
+        "continue-project", "--predecessor-orchestration-id", "orch-1",
+        "--clarification", "approved rule", "--project-root", str(tmp_path),
+    ]) == 0
+    assert captured["adaptive_command"] == "continue-project"
+    assert "--constraint" not in captured["guarded_arguments"]
+
+
 
 def test_bridge_routes_project_status_without_worker_constraint(
     monkeypatch, tmp_path

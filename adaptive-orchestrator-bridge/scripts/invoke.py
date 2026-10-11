@@ -712,6 +712,7 @@ def main(argv: list[str] | None = None) -> int:
         "dispatch",
         "wait",
         "resume-project",
+        "continue-project",
         "pause-project",
         "project-status",
         "supervise-projects",

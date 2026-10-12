@@ -5,7 +5,7 @@ license: MIT
 user-invocable: true
 metadata:
   author: oliveiraariel
-  version: "1.1.1"
+  version: "1.2.0"
   openclaw:
     primaryEnv: OPENCLAW_GATEWAY_TOKEN
 ---
@@ -73,6 +73,86 @@ python3 "{baseDir}/scripts/invoke.py" \
 ```
 
 This is still project orchestration: Adaptive materializes a checkpoint, starts its guardian, and can resume the same orchestration identity. It only constrains useful worker parallelism to one; it does not downgrade the request to `run`.
+
+## Execution profiles (explicit operator selection)
+
+When the user names a saved Adaptive profile, **pass the profile ID as
+`--execution-profile <id>`** in the initial `--multi-agent` or
+`--durable-single-worker` invocation. Never simulate the profile in prose
+or silently change the permanent Adaptive env/settings.
+
+Supported explicit presets include:
+
+- `gpt-terra-medium-low`: coordinator GPT Terra medium, worker Terra low,
+  fallback to Kimi K2.7 **only** on quota, and coordinator fallback direto
+  on exhausted quality strategies.
+- `gpt-luna-medium-low`: coordinator GPT Luna medium, **one** Luna low worker
+  at a time, no other LLM fallback; quota exhaustion pauses for later resume.
+- `gpt-fallback-direto`: coordinator GPT Terra medium executes assigned
+  Work Units itself, without Bridge recursion or subordinate delegation;
+  no change of LLM.
+- `kimi-k3-k27`: coordinator Kimi K3 provider-native, worker Kimi K2.7,
+  fallback to Terra low **only** on quota.
+- `original`: preserve installed Adaptive routing/parallelism unchanged.
+
+These presets require their exact provider IDs to be configured in the local
+OpenClaw. The Bridge must not silently substitute a different model; a profile
+preflight failure is an honest BLOCKER. For quality-driven coordinator takeover
+profiles, pass a **distinct** `--planner-agent` and `--agent` (for example
+`--planner-agent adaptive --agent sgfp`) so fallback direto can transfer
+ownership to the recorded coordinator.
+
+The user's selection is a one-orchestration setting. Profile snapshots are
+durable and remain unchanged on resume unless the user **explicitly** changes
+a paused, quiescent project via the supported command. Never change an active
+model behind the controller's back. Projects with `PAUSED` after quota
+exhaustion must not be blindly restarted before model availability is checked.
+
+### User-facing term: fallback direto
+
+Use **"fallback direto"** in user-facing prose. Adaptive core calls the
+underlying transfer a governed `takeover` in `direct` mode; they refer to
+the same owner execution path. A user can request it for one Work Unit or all
+already-planned, unfinished executable Work Units, even while a project
+runs. The Bridge forwards `fallback-direto` and reports `REQUESTED`,
+not success: Adaptive must first verify executor termination/fencing.
+
+For one Work Unit:
+
+```bash
+python3 "{baseDir}/scripts/invoke.py" fallback-direto \
+  --project-root "/absolute/project/root" \
+  --orchestration-id "existing-orchestration-id" \
+  --work-unit-id "known-work-unit-id" \
+  --owner-agent adaptive --actor operator \
+  --reason "User requested direct coordinator execution" --authorize
+```
+
+For all pending Work Units replace `--work-unit-id ...` by `--all-pending`.
+The supplied `--owner-agent` must match the coordinator recorded in the
+checkpoint. Terminal and `HUMAN_ACTION` Work Units are excluded. A new
+Work Unit created in a later replan is not retroactively included.
+
+### Change profile on an existing project
+
+1. Reconcile `project-status` and request `pause-project` on that
+   same project. Wait for zero active executors, `PAUSED`, and controller
+   `QUIESCENT`; never infer quiescence from an old heartbeat.
+2. Forward `switch-execution-profile --orchestration-id ... --project-root ...
+   --execution-profile <id> --actor operator --reason ... --authorize`.
+3. Confirm the persisted profile in the checkpoint, and only then call
+   `resume-project` on the **same orchestration ID** when authorized.
+
+Listing and creating custom profiles are management commands, e.g.
+`execution-profile list`, `execution-profile show NAME`,
+`execution-profile save --file path.json`, `execution-profile delete NAME`.
+Creating profiles does not mutate global routing or already-running work.
+
+Never use an unauthorized default LLM fallback to bypass a profile's quota
+rules. Exhausting the explicitly allowed primary and secondary is a pause/
+capacity BLOCKER, not an instruction for spontaneous coordinator execution.
+Provider charges, OAuth profiles and model availability still require
+runtime preflight.
 
 ## Observability boundary
 

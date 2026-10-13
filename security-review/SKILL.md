@@ -4,10 +4,12 @@ description: Review software security through explicit trust boundaries, threat 
 license: MIT
 metadata:
   author: oliveiraariel
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Security Review
+
+This canonical skill is registered under the capabilities `review.security` and `security.review`. They are equivalent identifiers for the same security review workflow, not separate skills. Maintain the same threat-modeling and verification requirements regardless of which capability was requested.
 
 Scope the threat model before enumerating controls.
 

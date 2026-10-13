@@ -157,6 +157,21 @@ def main() -> None:
             if not isinstance(entry.get(tuple_field, []), list):
                 fail(f"registry entry {skill_id}.{tuple_field} must be a list")
 
+    # The Adaptive planner may emit either vocabulary for security review.
+    # Both must resolve to one implemented, evidence-backed canonical skill.
+    security_providers = {
+        capability: [entry["id"] for entry in entries if capability in entry["capabilities"]]
+        for capability in ("review.security", "security.review")
+    }
+    for capability, providers in security_providers.items():
+        if providers != ["security-review"]:
+            fail(
+                f"{capability} must be served solely by the canonical "
+                f"security-review skill; found {providers}"
+            )
+    if not (ROOT / "security-review" / "SKILL.md").is_file():
+        fail("security-review capability alias has no underlying skill document")
+
     unused = capability_set - used_capabilities
     if unused:
         fail(f"capability registry contains unused capabilities: {sorted(unused)}")

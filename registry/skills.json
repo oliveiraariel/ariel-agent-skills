@@ -505,7 +505,8 @@
       "id": "security-review",
       "purpose": "Review software threats, authorization boundaries, data handling, attack surfaces, observability boundaries, and security evidence.",
       "capabilities": [
-        "review.security"
+        "review.security",
+        "security.review"
       ],
       "inputs": [
         "architecture",
@@ -521,7 +522,7 @@
       "compatible_agents": [],
       "compatible_models": [],
       "compatible_runtimes": [],
-      "version": "0.2.0",
+      "version": "0.2.1",
       "execution_profile": {
         "responsibility": "high",
         "model_tier_hint": "strong"

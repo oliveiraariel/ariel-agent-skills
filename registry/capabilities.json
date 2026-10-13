@@ -66,6 +66,10 @@
       "description": "Review security boundaries, threats, controls, and evidence."
     },
     {
+      "id": "security.review",
+      "description": "Compatibility alias for review.security, resolved through the canonical security-review skill."
+    },
+    {
       "id": "integration.release",
       "description": "Integrate changes safely through merge, CI, migrations, release, and rollback."
     },

@@ -74,12 +74,26 @@ python3 "{baseDir}/scripts/invoke.py" \
 
 This is still project orchestration: Adaptive materializes a checkpoint, starts its guardian, and can resume the same orchestration identity. It only constrains useful worker parallelism to one; it does not downgrade the request to `run`.
 
-## Execution profiles (explicit operator selection)
+## Execution profiles (operator-controlled selection)
 
-When the user names a saved Adaptive profile, **pass the profile ID as
-`--execution-profile <id>`** in the initial `--multi-agent` or
-`--durable-single-worker` invocation. Never simulate the profile in prose
-or silently change the permanent Adaptive env/settings.
+For each NEW project, **omit `--execution-profile` unless the human explicitly
+requests a different profile for that project**. Adaptive then resolves the
+operator's persistent default itself. Inspect it with
+`execution-profile default` when the default is relevant; an absent policy
+preserves the legacy `original` default. Never infer a profile change merely
+from the OpenClaw chat model selection.
+
+If a human explicitly requests a profile different from the configured locked
+default, pass `--execution-profile <id>` and ALSO the authorized override
+attestation `--authorize-profile-override --profile-override-actor user
+--profile-override-reason "Human explicitly requested <id>"`. Do not provide
+these authorization flags on agent initiative or to bypass a quota/quality
+failure. Without a human request, retain the installed default.
+
+Never simulate a profile in prose or silently change the permanent Adaptive
+settings. Modifying the persistent default itself is a separate explicitly
+authorized operator action (`execution-profile set-default ... --authorize
+--actor ... --reason ...`); do not do it as a side effect of starting a project.
 
 Supported explicit presets include:
 

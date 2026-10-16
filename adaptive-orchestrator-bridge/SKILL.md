@@ -263,6 +263,11 @@ validation is independent from observer delivery: `UNBOUND`, `PENDING`, and
 `FAILED` observer states must remain explicit and must never be upgraded to
 `DELIVERED`; they also do not invalidate a separately verified artifact.
 
+Treat `release_deliveries` as authoritative only when `validated=true` and all
+structured fields are present: manifest path, artifact path, report path,
+version, `size_bytes`, and `sha256`. Never reconstruct these values from worker
+prose or an old ZIP filename.
+
 For a terminal `PARTIAL` checkpoint that has received a new governed human
 clarification, do not edit the predecessor checkpoint or start an unrelated
 fresh project. Forward the clarification through the Adaptive management

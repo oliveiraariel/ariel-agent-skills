@@ -92,6 +92,7 @@ def test_missing_source_session_is_recorded_without_claiming_delivery(tmp_path):
         environment={},
     )
     assert registration.status == "UNBOUND"
+    assert registration.status != "DELIVERED"
     assert registration.job_id is None
     assert "OPENCLAW_SESSION_KEY" in (registration.error or "")
 

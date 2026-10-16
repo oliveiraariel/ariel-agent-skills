@@ -110,4 +110,12 @@ paths. Artifact validation and OpenClaw notification delivery remain separate:
 `UNBOUND`, `PENDING`, or `FAILED` notification registration is never
 `DELIVERED` and does not invalidate an otherwise verified artifact.
 
+Packaging must use a temporary staging area for intermediate archives. Only the
+post-validation canonical artifact may be atomically published for a
+`release_identity`; the delivery manifest must retain the staging path, prove
+that historical artifacts were preserved, and pair the final artifact with the
+corresponding report. Platform checks are conditional: WordPress packages must
+read the plugin header's actual `Version`, while other platforms must declare
+and execute an equivalent inspectable version probe.
+
 Release is complete only when the integrated artifact passes every required gate for the exact released code state, required post-integration validation is terminal, operational ordering is clear, no required asynchronous gate remains merely pending, and the rollback/recovery path matches the risk of the change.

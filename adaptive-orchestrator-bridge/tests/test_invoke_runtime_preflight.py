@@ -234,6 +234,29 @@ def test_preflight_uses_resolved_executable_and_environment(monkeypatch):
     assert calls[0][0][0] == sys.executable
     assert calls[0][1]["env"] is environment
 
+
+def test_adaptive_process_forwards_output_progressively_and_keeps_bounded_error_tail(
+    capsys,
+):
+    completed = bridge._run_adaptive_process(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import sys; print('progress-1', flush=True); "
+                "print('progress-2', flush=True); "
+                "print('{\"ok\": false, \"error_type\": \"ExecutionProfileError\"}', "
+                "file=sys.stderr, flush=True)"
+            ),
+        ],
+        {},
+    )
+    captured = capsys.readouterr()
+    assert completed.returncode == 0
+    assert "progress-1\nprogress-2\n" in captured.out
+    assert '"error_type": "ExecutionProfileError"' in completed.stderr
+    assert bridge._is_deterministic_pre_admission_failure(completed)
+
 def test_orchestrate_retries_once_after_proven_pre_admission_failure(
     monkeypatch, tmp_path, capsys
 ):
@@ -259,7 +282,7 @@ def test_orchestrate_retries_once_after_proven_pre_admission_failure(
         _write_project_checkpoint(project, orchestration_id)
         return Completed(0)
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
 
     result = bridge._run_adaptive_with_admission_retry(
         command=[sys.executable, "-m", "adaptive_orchestrator"],
@@ -301,7 +324,7 @@ def test_orchestrate_does_not_retry_after_checkpoint_exists(
         _write_project_checkpoint(project, orchestration_id)
         return Completed()
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
 
     result = bridge._run_adaptive_with_admission_retry(
         command=[sys.executable, "-m", "adaptive_orchestrator"],
@@ -332,7 +355,7 @@ def test_orchestrate_does_not_retry_deterministic_pre_admission_configuration_er
         calls.append(args)
         return Completed()
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
     result = bridge._run_adaptive_with_admission_retry(
         command=[sys.executable, "-m", "adaptive_orchestrator"],
         adaptive_command="orchestrate",
@@ -351,6 +374,11 @@ def test_orchestrate_retries_exit_one_when_structured_error_is_transient(
     project = tmp_path / "project"
     project.mkdir()
     calls = []
+    monkeypatch.setattr(
+        bridge,
+        "_project_status",
+        lambda **kwargs: (_status_payload(kwargs["orchestration_id"]), None),
+    )
 
     class Completed:
         def __init__(self, returncode, stderr):
@@ -369,7 +397,7 @@ def test_orchestrate_retries_exit_one_when_structured_error_is_transient(
         result.stdout = json.dumps(_status_payload(orchestration_id))
         return result
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
     result = bridge._run_adaptive_with_admission_retry(
         command=[sys.executable, "-m", "adaptive_orchestrator"],
         adaptive_command="orchestrate",
@@ -407,7 +435,7 @@ def test_orchestrate_retries_once_after_child_launch_oserror(
         _write_project_checkpoint(project, orchestration_id)
         return Completed()
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
 
     result = bridge._run_adaptive_with_admission_retry(
         command=[sys.executable, "-m", "adaptive_orchestrator"],
@@ -447,7 +475,7 @@ def test_orchestrate_zero_exit_without_checkpoint_retries_once_then_succeeds(
             _write_project_checkpoint(project, orchestration_id)
         return Completed()
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
 
     result = bridge._run_adaptive_with_admission_retry(
         command=[sys.executable, "-m", "adaptive_orchestrator"],
@@ -484,7 +512,7 @@ def test_orchestrate_zero_exit_without_checkpoint_twice_returns_deterministic_er
         calls += 1
         return Completed()
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
 
     result = bridge._run_adaptive_with_admission_retry(
         command=[sys.executable, "-m", "adaptive_orchestrator"],
@@ -518,7 +546,7 @@ def test_plan_only_zero_exit_without_checkpoint_is_valid(monkeypatch, tmp_path):
         calls += 1
         return Completed()
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
 
     result = bridge._run_adaptive_with_admission_retry(
         command=[sys.executable, "-m", "adaptive_orchestrator"],
@@ -548,7 +576,7 @@ def test_non_orchestrate_command_never_retries(monkeypatch, tmp_path):
         calls += 1
         return Completed()
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
 
     result = bridge._run_adaptive_with_admission_retry(
         command=[sys.executable, "-m", "adaptive_orchestrator"],
@@ -731,7 +759,7 @@ def test_bridge_final_line_carries_authoritative_terminal_state(
         _write_project_checkpoint(project, orchestration_id)
         return Completed()
 
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
     monkeypatch.setattr(
         bridge,
         "_project_status",
@@ -790,7 +818,7 @@ def test_durable_admission_registers_observer_for_source_session(
         return Completed()
 
     monkeypatch.setattr(bridge, "register_terminal_observer", fake_register)
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
     monkeypatch.setattr(
         bridge,
         "_project_status",
@@ -843,7 +871,7 @@ def test_observer_exception_does_not_interrupt_adaptive(
         raise RuntimeError("gateway unavailable")
 
     monkeypatch.setattr(bridge, "register_terminal_observer", failing_register)
-    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(bridge, "_run_adaptive_process", lambda args, environment: fake_run(args))
     monkeypatch.setattr(
         bridge,
         "_project_status",

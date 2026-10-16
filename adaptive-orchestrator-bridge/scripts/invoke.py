@@ -10,6 +10,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from collections import deque
+import queue
 import shutil
 import subprocess
 import sys
@@ -37,6 +39,50 @@ RUNTIME_MODULES = ("adaptive_orchestrator", "jsonschema", "websockets", "cryptog
 DURABLE_ADMISSION_NOT_MATERIALIZED = 125
 ORCHESTRATION_ID_ALREADY_ADMITTED = 124
 DETERMINISTIC_PRE_ADMISSION_ERROR_TYPES = frozenset({"ExecutionProfileError"})
+
+
+class _StreamingCompleted:
+    def __init__(self, returncode: int, stderr: str) -> None:
+        self.returncode = returncode
+        self.stderr = stderr
+
+
+def _run_adaptive_process(
+    command: list[str], environment: dict[str, str]
+) -> _StreamingCompleted:
+    """Run Adaptive with live forwarding and bounded diagnostic retention."""
+    child = subprocess.Popen(
+        command, env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, bufsize=1,
+    )
+    events: queue.Queue[tuple[str, str]] = queue.Queue()
+    stderr_tail: deque[str] = deque(maxlen=64)
+
+    def drain(stream_name: str, stream) -> None:
+        try:
+            for line in iter(stream.readline, ""):
+                events.put((stream_name, line))
+        finally:
+            stream.close()
+
+    readers = [
+        threading.Thread(target=drain, args=("stdout", child.stdout), daemon=True),
+        threading.Thread(target=drain, args=("stderr", child.stderr), daemon=True),
+    ]
+    for reader in readers:
+        reader.start()
+    while child.poll() is None or any(reader.is_alive() for reader in readers) or not events.empty():
+        try:
+            stream_name, line = events.get(timeout=0.05)
+        except queue.Empty:
+            continue
+        output = sys.stdout if stream_name == "stdout" else sys.stderr
+        print(line, end="", file=output, flush=True)
+        if stream_name == "stderr":
+            stderr_tail.append(line[-16384:])
+    for reader in readers:
+        reader.join()
+    return _StreamingCompleted(child.returncode, "".join(stderr_tail))
 
 
 def _is_deterministic_pre_admission_failure(completed: object) -> bool:
@@ -564,10 +610,8 @@ def _run_adaptive_with_admission_retry(
             watcher.start()
 
         try:
-            completed = subprocess.run(
-                [*command, adaptive_command, *guarded_arguments],
-                check=False, capture_output=True, text=True,
-                env=environment,
+            completed = _run_adaptive_process(
+                [*command, adaptive_command, *guarded_arguments], environment
             )
         except OSError as exc:
             stop_event.set()
@@ -600,11 +644,6 @@ def _run_adaptive_with_admission_retry(
             return 127
         finally:
             stop_event.set()
-
-        for stream_name in ("stdout", "stderr"):
-            stream = getattr(completed, stream_name, "") or ""
-            if stream:
-                print(stream, end="", file=sys.stdout if stream_name == "stdout" else sys.stderr)
 
         if watcher is not None:
             watcher.join(timeout=1.0)

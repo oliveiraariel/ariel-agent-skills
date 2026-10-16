@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import sys
+from types import SimpleNamespace
 from pathlib import Path
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "invoke.py"
@@ -694,6 +695,68 @@ def test_bridge_final_line_carries_authoritative_terminal_state(
     assert payload["lifecycle_phase"] == "TERMINAL"
     assert payload["returncode"] == 0
     assert payload["orchestration_id"]
+
+
+def test_durable_admission_registers_observer_for_source_session(
+    monkeypatch, tmp_path, capsys
+):
+    project = tmp_path / "project"
+    project.mkdir()
+    registrations = []
+
+    def fake_register(**kwargs):
+        registrations.append(kwargs)
+        return SimpleNamespace(
+            status="REGISTERED",
+            job_id="job-admission",
+            declaration_key="adaptive-terminal:" + kwargs["orchestration_id"],
+            project_root=str(kwargs["project_root"]),
+            orchestration_id=kwargs["orchestration_id"],
+            error=None,
+        )
+
+    class Completed:
+        returncode = 0
+
+    def fake_run(args, **kwargs):
+        orchestration_id = bridge._argument_value(args, "--orchestration-id")
+        assert orchestration_id is not None
+        _write_project_checkpoint(project, orchestration_id)
+        return Completed()
+
+    monkeypatch.setattr(bridge, "register_terminal_observer", fake_register)
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(
+        bridge,
+        "_project_status",
+        lambda **kwargs: (_status_payload(kwargs["orchestration_id"]), None),
+    )
+
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="orchestrate",
+        guarded_arguments=["--project-root", str(project), "--objective", "test"],
+        environment={
+            "OPENCLAW_SESSION_KEY": "agent:main:source-conversation",
+            "OPENCLAW_CONVERSATION_REF": "webchat:source-conversation",
+        },
+    )
+
+    assert result == 0
+    assert len(registrations) == 1
+    assert registrations[0]["orchestration_id"]
+    assert registrations[0]["project_root"] == project
+    assert registrations[0]["environment"]["OPENCLAW_SESSION_KEY"] == (
+        "agent:main:source-conversation"
+    )
+    final_lines = [
+        line for line in capsys.readouterr().err.splitlines()
+        if line.startswith("BRIDGE_FINAL ")
+    ]
+    assert len(final_lines) == 1
+    assert json.loads(final_lines[0].split(" ", 1)[1])["terminal_observer"]["status"] == (
+        "REGISTERED"
+    )
 
 
 

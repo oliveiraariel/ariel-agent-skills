@@ -17,6 +17,13 @@ import threading
 from pathlib import Path
 from uuid import uuid4
 
+# Keep direct script execution and the repository's spec-based tests on the
+# same import path without requiring installation as a Python package.
+_SCRIPT_DIR = str(Path(__file__).resolve().parent)
+if _SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPT_DIR)
+from terminal_observer import ObserverRegistration, register_terminal_observer
+
 
 RECURSION_GUARD = (
     "This task is already executing under Adaptive AI Orchestrator control. "
@@ -188,6 +195,31 @@ def _has_nonempty_option(arguments: list[str], name: str) -> bool:
     return False
 
 
+def _extract_option(arguments: list[str], name: str) -> tuple[list[str], str | None]:
+    """Remove one Bridge-owned option before forwarding to Adaptive."""
+    remaining: list[str] = []
+    value: str | None = None
+    index = 0
+    while index < len(arguments):
+        argument = arguments[index]
+        if argument == name:
+            if index + 1 >= len(arguments) or not arguments[index + 1].strip():
+                raise ValueError(f"{name} requires a non-empty value")
+            value = arguments[index + 1].strip()
+            index += 2
+            continue
+        if argument.startswith(name + "="):
+            candidate = argument.split("=", 1)[1].strip()
+            if not candidate:
+                raise ValueError(f"{name} requires a non-empty value")
+            value = candidate
+            index += 1
+            continue
+        remaining.append(argument)
+        index += 1
+    return remaining, value
+
+
 def _checkpoint_path(project_root: Path, orchestration_id: str) -> Path:
     digest = hashlib.sha256(orchestration_id.encode("utf-8")).hexdigest()
     return project_root / ".adaptive" / "orchestrations" / f"{digest}.json"
@@ -291,6 +323,7 @@ def _emit_final_event(
     orchestration_id: str | None,
     project_status: dict[str, object] | None,
     status_error: str | None = None,
+    terminal_observer: ObserverRegistration | None = None,
 ) -> None:
     payload: dict[str, object] = {
         "bridge_invocation_id": bridge_invocation_id,
@@ -321,6 +354,19 @@ def _emit_final_event(
         payload["authoritative_project_state"] = False
     if status_error:
         payload["status_error"] = status_error
+    if terminal_observer is not None:
+        payload["terminal_observer"] = {
+            "status": terminal_observer.status,
+            "job_id": terminal_observer.job_id,
+            "declaration_key": terminal_observer.declaration_key,
+            "association_path": str(
+                Path(terminal_observer.project_root)
+                / ".adaptive"
+                / "openclaw-terminal-observers"
+                / f"{terminal_observer.orchestration_id}.json"
+            ),
+            "error": terminal_observer.error,
+        }
     print(
         "BRIDGE_FINAL " + json.dumps(payload, ensure_ascii=False, sort_keys=True),
         file=sys.stderr,
@@ -367,6 +413,7 @@ def _run_adaptive_with_admission_retry(
         and orchestration_id is not None
         else None
     )
+    terminal_observer: ObserverRegistration | None = None
     if checkpoint_path is not None and checkpoint_path.exists():
         _emit_admission_event(
             event="existing-durable-orchestration",
@@ -388,6 +435,13 @@ def _run_adaptive_with_admission_retry(
             project_root=project_root,
             orchestration_id=orchestration_id,
         )
+        if orchestration_id is not None and project_root is not None:
+            terminal_observer = register_terminal_observer(
+                command=command,
+                project_root=project_root,
+                orchestration_id=orchestration_id,
+                environment=environment,
+            )
         _emit_final_event(
             bridge_invocation_id=bridge_invocation_id,
             adaptive_command=adaptive_command,
@@ -395,6 +449,7 @@ def _run_adaptive_with_admission_retry(
             orchestration_id=orchestration_id,
             project_status=status,
             status_error=status_error,
+            terminal_observer=terminal_observer,
         )
         return ORCHESTRATION_ID_ALREADY_ADMITTED
 
@@ -418,6 +473,7 @@ def _run_adaptive_with_admission_retry(
         admission_emitted = threading.Event()
 
         def emit_materialized() -> None:
+            nonlocal terminal_observer
             if admission_emitted.is_set():
                 return
             admission_emitted.set()
@@ -433,6 +489,13 @@ def _run_adaptive_with_admission_retry(
                     checkpoint_path.name if checkpoint_path is not None else None
                 ),
             )
+            if project_root is not None and orchestration_id is not None:
+                terminal_observer = register_terminal_observer(
+                    command=command,
+                    project_root=project_root,
+                    orchestration_id=orchestration_id,
+                    environment=environment,
+                )
 
         watcher = None
         if checkpoint_path is not None:
@@ -480,6 +543,7 @@ def _run_adaptive_with_admission_retry(
                 orchestration_id=orchestration_id,
                 project_status=None,
                 status_error="Adaptive child process could not be launched.",
+                terminal_observer=terminal_observer,
             )
             return 127
         finally:
@@ -573,6 +637,7 @@ def _run_adaptive_with_admission_retry(
                     orchestration_id=orchestration_id,
                     project_status=None,
                     status_error="Durable project admission did not materialize.",
+                    terminal_observer=terminal_observer,
                 )
                 return DURABLE_ADMISSION_NOT_MATERIALIZED
             _emit_final_event(
@@ -582,6 +647,7 @@ def _run_adaptive_with_admission_retry(
                 orchestration_id=orchestration_id,
                 project_status=None,
                 status_error="Adaptive exited before durable project admission.",
+                terminal_observer=terminal_observer,
             )
             return completed.returncode
 
@@ -592,6 +658,7 @@ def _run_adaptive_with_admission_retry(
             orchestration_id=orchestration_id,
             project_status=project_status,
             status_error=status_error,
+            terminal_observer=terminal_observer,
         )
 
         if completed.returncode == 0:
@@ -633,12 +700,26 @@ def main(argv: list[str] | None = None) -> int:
     diagnose = "--diagnose" in arguments
     arguments = [item for item in arguments if item != "--diagnose"]
     try:
+        arguments, source_session_key = _extract_option(
+            arguments, "--openclaw-session-key"
+        )
+        arguments, source_conversation_ref = _extract_option(
+            arguments, "--openclaw-conversation-ref"
+        )
+    except ValueError as exc:
+        print(f"BRIDGE_SOURCE_CONTEXT_INVALID: {exc}", file=sys.stderr)
+        return 2
+    try:
         explicit_root = os.environ.get("ADAPTIVE_ORCHESTRATOR_ROOT")
         if explicit_root:
             command, environment = _resolve_explicit_root(Path(explicit_root).expanduser().resolve())
         else:
             command = resolve_command()
             environment = os.environ.copy()
+        if source_session_key:
+            environment["OPENCLAW_SESSION_KEY"] = source_session_key
+        if source_conversation_ref:
+            environment["OPENCLAW_CONVERSATION_REF"] = source_conversation_ref
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
         return 127

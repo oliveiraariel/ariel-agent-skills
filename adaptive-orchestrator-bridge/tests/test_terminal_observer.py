@@ -51,6 +51,7 @@ def test_registration_persists_exact_source_and_gateway_job(monkeypatch, tmp_pat
     assert params["declarationKey"] == "adaptive-terminal:orch-1"
     assert params["trigger"]["once"] is True
     assert "project-status" in params["trigger"]["script"]
+    assert "release_deliveries" in params["trigger"]["script"]
     assert "terminal" in params["trigger"]["script"]
 
 
@@ -109,6 +110,7 @@ def test_terminal_payload_is_short_lived_and_terminal_only(tmp_path):
     assert payload["delivery"] == {"mode": "announce"}
     assert "terminal=true" in payload["payload"]["message"]
     assert "project-status" in payload["trigger"]["script"]
+    assert "canonical artifact" in payload["payload"]["message"]
 
 
 def test_delivery_failure_remains_pending_and_retryable(monkeypatch, tmp_path):

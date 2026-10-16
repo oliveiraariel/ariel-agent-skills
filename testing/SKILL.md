@@ -20,6 +20,15 @@ Choose the cheapest test layer that can reliably detect the failure being guarde
 5. Make failures reproducible and assertions diagnostic.
 6. Record what was actually run and what remains unverified, linking important test IDs and run evidence to the approved requirement and rule IDs in the project's documentation manifest/traceability mechanism. A written test plan is not evidence of execution.
 
+## Default verification cadence (cross-project rule)
+
+- During implementation run the **cheapest causal regression and directly affected checks**. Do not run the complete test suite at every Work Unit or after non-code observations.
+- Run the **project-required** full/integration gates at final source state (normally once at integration), plus any risk-triggered checks for security, finance, persistence, schema, concurrency or external contracts. Never downgrade a mandatory gate.
+- Reuse earlier `PASS` only if source/WIP fingerprint, command, tools, dependencies, configuration, environment and covered criteria are equivalent. Mark as `REUSED` with the original evidence reference; do not claim that the test ran again.
+- For a `RETURNED` caused by packaging/result reconciliation, inspect the exact authoritative `reason` and existing manifest/ZIP before repeating tests. Run only the affected checks unless the source/package changed.
+- In read-only verification, avoid shell commands that create and automatically delete temporary directories; do not use destructive cleanup as an audit prerequisite. For test jobs, keep scratch operations isolated and within tool permissions.
+- Report a short evidence ledger with `PASS`, `FAIL`, `REUSED`, `NOT_RUN`; avoid repeating full test transcripts or the same completion footer in multiple summaries.
+
 ## Evidence and failure classification
 
 - Treat a red suite as evidence of a problem, not automatic proof of a production defect. Classify each failure as production code, test/fixture/double, environment/tooling, runtime/transport, or unresolved before changing the implementation.

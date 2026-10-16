@@ -291,6 +291,15 @@ only unfinished Work Units; then use its returned targeted `resume-project`
 command. This command is available only when the installed Adaptive runtime
 supports it.
 
+## Permanent verification and communication economy
+
+Adaptive injects `ADAPTIVE_VERIFICATION_EFFICIENCY_V1` on each delegated `TaskPackage`. Treat it as an always-on rule: a new user prompt only needs the **task-specific** objective, evidence and acceptance criteria, not repeated global preflight, security, testing, `RETURNED`, ZIP and result-observer recipes.
+
+- Show at most one concise acknowledgement per meaningful state change; the completion footer and manifest belong in authoritative worker results, not multiple near-identical user-facing paragraphs. Repeat a message only when requested or when new facts materially change the conclusion.
+- A source-identical `RETURNED` should lead to a targeted status/manifest read; it is not a reason to restart the whole project, repeat the full suite, regenerate a valid ZIP, or start duplicate Bridge observers.
+- Keep AMEP file-backed identity/hash verification, safe checkpoint operations, mandatory release schema checks and terminal observer deduplication intact; these are security/integrity gates, **not** removable test noise.
+- Shell policy rejecting cleanup during a `read-only` audit is resolved with non-mutating inspection, not `rm -rf` or an unauthorized alternative.
+
 ## Result and recovery semantics
 
 ### Single-unit mode

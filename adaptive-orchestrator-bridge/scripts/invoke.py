@@ -38,6 +38,44 @@ DURABLE_ADMISSION_NOT_MATERIALIZED = 125
 ORCHESTRATION_ID_ALREADY_ADMITTED = 124
 
 
+def _register_terminal_observer_safely(
+    *,
+    command: list[str],
+    project_root: str | Path,
+    orchestration_id: str,
+    environment: dict[str, str],
+) -> ObserverRegistration:
+    """Register without allowing notification plumbing to abort Adaptive."""
+    try:
+        return register_terminal_observer(
+            command=command,
+            project_root=project_root,
+            orchestration_id=orchestration_id,
+            environment=environment,
+        )
+    except Exception as exc:  # noqa: BLE001 - observer failure is non-fatal
+        error = f"{type(exc).__name__}: {exc}"
+        print(
+            "BRIDGE_TERMINAL_OBSERVER_FAILURE "
+            + json.dumps(
+                {"orchestration_id": orchestration_id, "status": "FAILED", "error": error},
+                sort_keys=True,
+            ),
+            file=sys.stderr,
+            flush=True,
+        )
+        return ObserverRegistration(
+            schema_version=1,
+            orchestration_id=orchestration_id,
+            project_root=str(project_root),
+            session_key=environment.get("OPENCLAW_SESSION_KEY"),
+            conversation_ref=environment.get("OPENCLAW_CONVERSATION_REF"),
+            declaration_key=f"adaptive-terminal:{orchestration_id}",
+            status="FAILED",
+            error=error,
+        )
+
+
 def _runtime_preflight(command: list[str], environment: dict[str, str]) -> dict[str, object]:
     """Validate the exact interpreter/environment before starting Adaptive."""
     if not command or not Path(command[0]).is_file():
@@ -436,7 +474,7 @@ def _run_adaptive_with_admission_retry(
             orchestration_id=orchestration_id,
         )
         if orchestration_id is not None and project_root is not None:
-            terminal_observer = register_terminal_observer(
+            terminal_observer = _register_terminal_observer_safely(
                 command=command,
                 project_root=project_root,
                 orchestration_id=orchestration_id,
@@ -490,7 +528,7 @@ def _run_adaptive_with_admission_retry(
                 ),
             )
             if project_root is not None and orchestration_id is not None:
-                terminal_observer = register_terminal_observer(
+                terminal_observer = _register_terminal_observer_safely(
                     command=command,
                     project_root=project_root,
                     orchestration_id=orchestration_id,

@@ -759,6 +759,49 @@ def test_durable_admission_registers_observer_for_source_session(
     )
 
 
+def test_observer_exception_does_not_interrupt_adaptive(
+    monkeypatch, tmp_path, capsys
+):
+    project = tmp_path / "project"
+    project.mkdir()
+
+    class Completed:
+        returncode = 0
+
+    def fake_run(args, **kwargs):
+        orchestration_id = bridge._argument_value(args, "--orchestration-id")
+        assert orchestration_id is not None
+        _write_project_checkpoint(project, orchestration_id)
+        return Completed()
+
+    def failing_register(**kwargs):
+        raise RuntimeError("gateway unavailable")
+
+    monkeypatch.setattr(bridge, "register_terminal_observer", failing_register)
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    monkeypatch.setattr(
+        bridge,
+        "_project_status",
+        lambda **kwargs: (_status_payload(kwargs["orchestration_id"]), None),
+    )
+
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="orchestrate",
+        guarded_arguments=["--project-root", str(project), "--objective", "test"],
+        environment={"OPENCLAW_SESSION_KEY": "agent:main:source-conversation"},
+    )
+
+    assert result == 0
+    stderr = capsys.readouterr().err
+    assert "BRIDGE_TERMINAL_OBSERVER_FAILURE" in stderr
+    final_lines = [line for line in stderr.splitlines() if line.startswith("BRIDGE_FINAL ")]
+    payload = json.loads(final_lines[-1].split(" ", 1)[1])
+    assert payload["terminal_observer"]["status"] == "FAILED"
+    assert payload["terminal_observer"]["job_id"] is None
+    assert payload["terminal_observer"]["error"] == "RuntimeError: gateway unavailable"
+
+
 
 def test_bridge_requires_explicit_execution_mode(monkeypatch, capsys):
     command = [sys.executable, "-m", "adaptive_orchestrator"]

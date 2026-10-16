@@ -33,7 +33,7 @@ Use this standard whenever the work creates or regenerates an installable/deploy
 - Confirm the authoritative repository/worktree, branch/ref, HEAD when available, and working-tree state before packaging.
 - Package the intended current state. Intentional dirty WIP is allowed only when explicitly recognized and reported.
 - Never silently package a stale commit or reuse an artifact generated before the validated change.
-- For a fix/hotfix/retest, generate a fresh artifact after the relevant gates pass.
+- For a fix/hotfix/retest, generate a fresh artifact **after a real source change** and the relevant gates. If a subsequent `RETURNED` is exclusively acceptance/manifest reconciliation for the **same exact source** with an intact canonical artifact, revalidate and reuse that artifact rather than bumping the version or rebuilding it. Never reuse a stale artifact after source changes.
 
 ### Validation before packaging
 
@@ -54,6 +54,13 @@ Include only runtime-required material and production dependencies/assets. Exclu
 - development-only tooling/documentation.
 
 Validate the platform-specific package root, entrypoint/manifests, runtime dependencies/autoload/assets, and absence of accidental extra directory nesting.
+
+### Verification economy and shell-safe read-only audits
+
+- Revalidate only the missing release contract when the source and package are unchanged; do not reflexively repeat full PHPUnit/pytest, syntax and packaging checks after a purely structured-metadata rejection. Existing authoritative evidence may be `REUSED` when it still applies to the exact source.
+- Never waive required final gates. A changed source or invalidated review requires appropriate re-execution.
+- Keep a canonical verification ledger instead of writing identical results repeatedly to Result Store or chat.
+- For inspections of existing artifacts, use non-mutating commands and direct archive/manifest reads. A shell policy rejecting automatic temporary cleanup should trigger a read-only alternative, not an unsafe deletion workaround.
 
 ### Integrity evidence
 

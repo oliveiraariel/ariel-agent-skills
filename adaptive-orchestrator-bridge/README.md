@@ -51,3 +51,32 @@ python3 adaptive-orchestrator-bridge/scripts/invoke.py \
 ```
 
 The command forwards to the Adaptive CLI and returns the same exit status and JSON output.
+
+## Terminal delivery contract
+
+`BRIDGE_FINAL` is the only compact completion marker emitted by this process. It
+is emitted after the child command ends and after the Bridge re-reads
+`project-status`; it is not a chat message and it is not proof that a detached
+OpenClaw conversation has received a reply.
+
+At durable admission, an OpenClaw invocation supplies the trusted source
+session through `OPENCLAW_SESSION_KEY` (and may supply an audit-only
+`OPENCLAW_CONVERSATION_REF`). The Bridge persists an association under
+`.adaptive/openclaw-terminal-observers/<orchestration-id>.json` and registers an
+idempotent Gateway cron declaration keyed by that orchestration. The declaration
+uses bounded `project-status` triggers, `once=true`, the exact source session,
+and `delivery.mode=announce`; it never resumes or dispatches Adaptive work.
+The Gateway therefore owns retry, history commit, and deduplication after the
+originating turn ends. If source-session context is unavailable, the association
+is explicitly recorded as `UNBOUND` and no delivery is claimed.
+
+The OpenClaw-facing skill obtains the current session key through the native
+`session_status` operation and injects it into the Bridge-owned
+`--openclaw-session-key` option. This is internal integration context; the user
+does not provide it. The Bridge strips the option before invoking Adaptive.
+
+Recovery rule: if a completion announcement is missing, read the retained
+`BRIDGE_FINAL`/process log and run targeted `project-status` for the exact
+orchestration ID. Do not re-run the Bridge or redispatch Work Units. A terminal
+checkpoint is sufficient to recover the result, while a non-terminal checkpoint
+must go through the existing targeted supervisor path.

@@ -269,7 +269,7 @@ def test_orchestrate_retries_once_after_proven_pre_admission_failure(
     )
 
     assert result == 0
-    assert len(calls) == 2
+    assert len([call for call in calls if "project-status" not in call]) == 2
     events = capsys.readouterr().err
     assert "retrying-pre-admission-failure" in events
     assert '"checkpoint_created": false' in events
@@ -326,6 +326,7 @@ def test_orchestrate_does_not_retry_deterministic_pre_admission_configuration_er
 
     class Completed:
         returncode = 1
+        stderr = '{"ok": false, "error_type": "ExecutionProfileError"}'
 
     def fake_run(args, **kwargs):
         calls.append(args)
@@ -342,6 +343,43 @@ def test_orchestrate_does_not_retry_deterministic_pre_admission_configuration_er
     assert result == 1
     assert len(calls) == 1
     assert "retrying-pre-admission-failure" not in capsys.readouterr().err
+
+
+def test_orchestrate_retries_exit_one_when_structured_error_is_transient(
+    monkeypatch, tmp_path, capsys
+):
+    project = tmp_path / "project"
+    project.mkdir()
+    calls = []
+
+    class Completed:
+        def __init__(self, returncode, stderr):
+            self.returncode = returncode
+            self.stderr = stderr
+            self.stdout = json.dumps(_status_payload("unused"))
+
+    def fake_run(args, **kwargs):
+        calls.append(args)
+        if len(calls) == 1:
+            return Completed(1, '{"ok": false, "error_type": "OpenClawGatewayError"}')
+        orchestration_id = bridge._argument_value(args, "--orchestration-id")
+        assert orchestration_id is not None
+        _write_project_checkpoint(project, orchestration_id)
+        result = Completed(0, "")
+        result.stdout = json.dumps(_status_payload(orchestration_id))
+        return result
+
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="orchestrate",
+        guarded_arguments=["--project-root", str(project), "--objective", "test"],
+        environment={},
+    )
+
+    assert result == 0
+    assert len([call for call in calls if "project-status" not in call]) == 2
+    assert "retrying-pre-admission-failure" in capsys.readouterr().err
 
 
 def test_orchestrate_retries_once_after_child_launch_oserror(

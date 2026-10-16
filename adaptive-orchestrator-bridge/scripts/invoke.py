@@ -36,6 +36,20 @@ DURABLE_SINGLE_WORKER_FLAG = "--durable-single-worker"
 RUNTIME_MODULES = ("adaptive_orchestrator", "jsonschema", "websockets", "cryptography")
 DURABLE_ADMISSION_NOT_MATERIALIZED = 125
 ORCHESTRATION_ID_ALREADY_ADMITTED = 124
+DETERMINISTIC_PRE_ADMISSION_ERROR_TYPES = frozenset({"ExecutionProfileError"})
+
+
+def _is_deterministic_pre_admission_failure(completed: object) -> bool:
+    """Classify Adaptive's structured error, never infer from exit status alone."""
+    raw = getattr(completed, "stderr", "") or ""
+    for line in reversed(str(raw).splitlines()):
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            return payload.get("error_type") in DETERMINISTIC_PRE_ADMISSION_ERROR_TYPES
+    return False
 
 
 def _register_terminal_observer_safely(
@@ -552,7 +566,7 @@ def _run_adaptive_with_admission_retry(
         try:
             completed = subprocess.run(
                 [*command, adaptive_command, *guarded_arguments],
-                check=False,
+                check=False, capture_output=True, text=True,
                 env=environment,
             )
         except OSError as exc:
@@ -586,6 +600,11 @@ def _run_adaptive_with_admission_retry(
             return 127
         finally:
             stop_event.set()
+
+        for stream_name in ("stdout", "stderr"):
+            stream = getattr(completed, stream_name, "") or ""
+            if stream:
+                print(stream, end="", file=sys.stdout if stream_name == "stdout" else sys.stderr)
 
         if watcher is not None:
             watcher.join(timeout=1.0)
@@ -635,7 +654,7 @@ def _run_adaptive_with_admission_retry(
             )
 
         if requires_durable_checkpoint and not checkpoint_created:
-            if attempt < max_attempts and completed.returncode != 1:
+            if attempt < max_attempts and not _is_deterministic_pre_admission_failure(completed):
                 _emit_admission_event(
                     event="retrying-pre-admission-failure",
                     admission_id=bridge_invocation_id,
@@ -708,11 +727,10 @@ def _run_adaptive_with_admission_retry(
         if checkpoint_created:
             return completed.returncode
 
-        # Adaptive uses exit 1 for authoritative pre-admission configuration
-        # errors (including unresolved/conflicting agent roles). Retrying the
-        # same immutable inputs cannot change that result and could create
-        # duplicate side effects in a future adapter, so stop here.
-        deterministic_pre_admission_failure = completed.returncode == 1
+        # Adaptive emits a structured error type for authoritative
+        # pre-admission configuration errors. Retrying the same immutable
+        # inputs cannot change that result and could create duplicate effects.
+        deterministic_pre_admission_failure = _is_deterministic_pre_admission_failure(completed)
         safe_pre_admission_failure = (
             adaptive_command == "orchestrate"
             and project_root is not None

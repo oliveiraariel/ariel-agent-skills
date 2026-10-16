@@ -105,8 +105,8 @@ adaptive-orchestrator agent-roles set-default \
 adaptive-orchestrator agent-roles default
 ```
 
-Adaptive validates these IDs against the local OpenClaw `agents.entries`
-configuration before admission. Explicit valid `--agent` and
+Adaptive validates these IDs through OpenClaw's authoritative
+`agents list --json` interface before admission. Explicit valid `--agent` and
 `--planner-agent` arguments remain authoritative. The receiving conversation
 agent is not used for both roles automatically.
 

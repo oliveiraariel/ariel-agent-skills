@@ -852,6 +852,56 @@ def test_durable_admission_registers_observer_for_source_session(
     )
 
 
+def test_resume_project_registers_observer_for_existing_orchestration(
+    monkeypatch, tmp_path
+):
+    project = tmp_path / "project"
+    project.mkdir()
+    orchestration_id = "resume-orch"
+    _write_project_checkpoint(project, orchestration_id)
+    registrations = []
+
+    monkeypatch.setattr(
+        bridge,
+        "register_terminal_observer",
+        lambda **kwargs: registrations.append(kwargs) or SimpleNamespace(
+            status="REGISTERED", job_id="resume-job",
+            declaration_key="adaptive-terminal:" + kwargs["orchestration_id"],
+            project_root=str(kwargs["project_root"]),
+            orchestration_id=kwargs["orchestration_id"], error=None,
+        ),
+    )
+    monkeypatch.setattr(
+        bridge, "_run_adaptive_process", lambda args, environment: SimpleNamespace(returncode=0, stderr="")
+    )
+    monkeypatch.setattr(
+        bridge, "_project_status",
+        lambda **kwargs: (_status_payload(kwargs["orchestration_id"]), None),
+    )
+
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="resume-project",
+        guarded_arguments=[
+            "--orchestration-id", orchestration_id,
+            "--project-root", str(project),
+        ],
+        environment={"OPENCLAW_SESSION_KEY": "agent:main:resume-conversation"},
+    )
+
+    assert result == 0
+    assert [item["orchestration_id"] for item in registrations] == [orchestration_id]
+
+
+def test_continue_project_observer_uses_adaptive_successor_identity():
+    assert bridge._successor_orchestration_id([
+        "--predecessor-orchestration-id", "predecessor",
+        "--clarification", "  deliver   package ",
+    ]) == bridge.hashlib.sha256(
+        "successor-v1\x1fpredecessor\x1fdeliver package".encode()
+    ).hexdigest()[:32]
+
+
 def test_observer_exception_does_not_interrupt_adaptive(
     monkeypatch, tmp_path, capsys
 ):

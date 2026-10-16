@@ -323,6 +323,18 @@ def _checkpoint_path(project_root: Path, orchestration_id: str) -> Path:
     return project_root / ".adaptive" / "orchestrations" / f"{digest}.json"
 
 
+def _successor_orchestration_id(arguments: list[str]) -> str | None:
+    """Derive the id used by Adaptive's idempotent continue-project command."""
+    predecessor = _argument_value(arguments, "--predecessor-orchestration-id")
+    clarification = _argument_value(arguments, "--clarification")
+    if not predecessor or not clarification:
+        return None
+    normalized = " ".join(clarification.split())
+    return hashlib.sha256(
+        f"successor-v1\x1f{predecessor}\x1f{normalized}".encode()
+    ).hexdigest()[:32]
+
+
 def _project_status(
     *,
     command: list[str],
@@ -496,6 +508,8 @@ def _run_adaptive_with_admission_retry(
     )
 
     orchestration_id = _argument_value(guarded_arguments, "--orchestration-id")
+    if adaptive_command == "continue-project" and orchestration_id is None:
+        orchestration_id = _successor_orchestration_id(guarded_arguments)
     if requires_durable_checkpoint and orchestration_id is None:
         orchestration_id = uuid4().hex
         guarded_arguments = [
@@ -512,6 +526,17 @@ def _run_adaptive_with_admission_retry(
         else None
     )
     terminal_observer: ObserverRegistration | None = None
+    if (
+        adaptive_command in {"resume-project", "continue-project"}
+        and project_root is not None
+        and orchestration_id is not None
+    ):
+        terminal_observer = _register_terminal_observer_safely(
+            command=command,
+            project_root=project_root,
+            orchestration_id=orchestration_id,
+            environment=environment,
+        )
     if checkpoint_path is not None and checkpoint_path.exists():
         _emit_admission_event(
             event="existing-durable-orchestration",
@@ -959,7 +984,7 @@ def main(argv: list[str] | None = None) -> int:
     # root. Otherwise the Adaptive CLI can use an implicit cwd while the Bridge
     # cannot derive the same checkpoint path or report authoritative status.
     # Refuse before starting Adaptive instead of silently losing observability.
-    if adaptive_command == "orchestrate":
+    if adaptive_command in {"orchestrate", "resume-project", "continue-project"}:
         project_root = _project_root_from_arguments(arguments)
         if project_root is None:
             print(

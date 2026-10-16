@@ -256,6 +256,13 @@ project-status --orchestration-id <exact-id> --project-root <project-root>
 
 before producing any user-visible terminal conclusion. If that status is non-terminal, use the same orchestration's targeted supervisor/resume path. Do not use the global supervisor merely to discover the state of one known orchestration.
 
+For terminal release work, reconcile the structured `release_deliveries` field
+from authoritative `project-status`/checkpoint and report the canonical
+manifest, artifact, required report, version, size, and SHA-256. Artifact
+validation is independent from observer delivery: `UNBOUND`, `PENDING`, and
+`FAILED` observer states must remain explicit and must never be upgraded to
+`DELIVERED`; they also do not invalidate a separately verified artifact.
+
 For a terminal `PARTIAL` checkpoint that has received a new governed human
 clarification, do not edit the predecessor checkpoint or start an unrelated
 fresh project. Forward the clarification through the Adaptive management

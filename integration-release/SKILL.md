@@ -99,4 +99,15 @@ Integration/release decisions are high-responsibility work; prefer a strong reas
 
 ## Completion gate
 
+For installable/deployable Work Units, worker prose and the Result Store
+transport manifest are not sufficient for acceptance. Adaptive must verify
+exactly one structured delivery manifest before `ACCEPTED`, including artifact
+and required report paths, source identity, version/internal version, size,
+SHA-256, install structure, integrity checks, and executed validations. Missing,
+inconsistent, corrupt, or ambiguous candidates return the Work Unit even under
+practical-test, local-delivery, runtime-completed, recovery, or reconciliation
+paths. Artifact validation and OpenClaw notification delivery remain separate:
+`UNBOUND`, `PENDING`, or `FAILED` notification registration is never
+`DELIVERED` and does not invalidate an otherwise verified artifact.
+
 Release is complete only when the integrated artifact passes every required gate for the exact released code state, required post-integration validation is terminal, operational ordering is clear, no required asynchronous gate remains merely pending, and the rollback/recovery path matches the risk of the change.

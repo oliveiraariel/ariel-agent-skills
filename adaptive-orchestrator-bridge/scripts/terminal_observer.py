@@ -102,8 +102,11 @@ def _trigger_script(
     message = (
         "Adaptive orchestration {id} reached terminal=true. Reconcile the "
         "authoritative project-status and Result Store for project-root {root}; "
-        "then deliver exactly one final report to the originating conversation. "
-        "Do not resume, redispatch, or create another orchestration."
+        "then reconcile release_deliveries and deliver exactly one final report "
+        "to the originating conversation. Include canonical artifact, report, "
+        "version, size, and SHA-256 fields when present. Keep artifact validation "
+        "separate from notification delivery. Do not resume, redispatch, or "
+        "create another orchestration."
     ).format(id=orchestration_id, root=project_root)
     # This is OpenClaw Code Mode JavaScript, persisted inside cron.add. The
     # command is bounded and the trigger is once=true, so it is not a long wait.
@@ -148,8 +151,8 @@ def _cron_payload(
             "message": (
                 f"Reconcile Adaptive orchestration {orchestration_id} after "
                 "terminal=true using authoritative project-status and the Result "
-                f"Store from {project_root}. Announce its final status, completed, "
-                "pending and blocked Work Units, artifact/report paths, and any "
+                f"Store from {project_root}. Reconcile release_deliveries and announce its final status, completed, "
+                "pending and blocked Work Units, canonical artifact/report paths, version, size, SHA-256, and any "
                 "interruption reason. Do not execute, resume, redispatch, or "
                 "create another orchestration."
             ),

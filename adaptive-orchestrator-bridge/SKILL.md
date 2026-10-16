@@ -35,7 +35,7 @@ For one user request that is clearly project work, invoke the bridge **exactly o
 
 ## Invocation
 
-Invoke the helper at `{baseDir}/scripts/invoke.py` on the host. Pass only the actual delegated work as `--objective`; do not include outer instructions such as “use Adaptive” in the nested objective. Use `--agent main` unless the user or project context identifies another OpenClaw agent/workspace that owns the target project.
+Invoke the helper at `{baseDir}/scripts/invoke.py` on the host. Pass only the actual delegated work as `--objective`; do not include outer instructions such as “use Adaptive” in the nested objective. Use `--agent main` unless the user or project context identifies another OpenClaw agent/workspace that owns the target project. For quality profiles, Adaptive resolves the planner and worker from its persistent operator policy; do not synthesize or remember `--planner-agent` in this skill.
 
 **Mandatory for `--multi-agent` and `--durable-single-worker`:** always pass `--project-root` with the explicit, existing **absolute path of the target project directory**. Do not omit this option, infer it from the current shell directory, or attempt to extract it from the natural-language objective. Without a project root the Bridge cannot prove durable admission or query the same project's authoritative checkpoint. The helper now refuses an invocation missing this argument with `BRIDGE_PROJECT_ROOT_REQUIRED` (or `BRIDGE_PROJECT_ROOT_INVALID` for a nonexistent directory). Never work around this guard by bypassing the Bridge.
 
@@ -74,7 +74,7 @@ python3 "{baseDir}/scripts/invoke.py" \
 
 This is still project orchestration: Adaptive materializes a checkpoint, starts its guardian, and can resume the same orchestration identity. It only constrains useful worker parallelism to one; it does not downgrade the request to `run`.
 
-## Execution profiles (operator-controlled selection)
+## Execution profiles and agent roles (operator-controlled selection)
 
 For each NEW project, **omit `--execution-profile` unless the human explicitly
 requests a different profile for that project**. Adaptive then resolves the
@@ -95,6 +95,21 @@ settings. Modifying the persistent default itself is a separate explicitly
 authorized operator action (`execution-profile set-default ... --authorize
 --actor ... --reason ...`); do not do it as a side effect of starting a project.
 
+For quality-driven profiles, configure the persistent agent roles once in
+Adaptive and inspect them when needed:
+
+```bash
+adaptive-orchestrator agent-roles set-default \
+  --planner adaptive --worker main --authorize --actor user \
+  --reason "Adaptive coordinates; Main executes"
+adaptive-orchestrator agent-roles default
+```
+
+Adaptive validates these IDs through OpenClaw's authoritative
+`agents list --json` interface before admission. Explicit valid `--agent` and
+`--planner-agent` arguments remain authoritative. The receiving conversation
+agent is not used for both roles automatically.
+
 Supported explicit presets include:
 
 - `gpt-terra-medium-low`: coordinator GPT Terra medium, worker Terra low,
@@ -112,9 +127,8 @@ Supported explicit presets include:
 These presets require their exact provider IDs to be configured in the local
 OpenClaw. The Bridge must not silently substitute a different model; a profile
 preflight failure is an honest BLOCKER. For quality-driven coordinator takeover
-profiles, pass a **distinct** `--planner-agent` and `--agent` (for example
-`--planner-agent adaptive --agent sgfp`) so fallback direto can transfer
-ownership to the recorded coordinator.
+profiles, Adaptive resolves a distinct planner and worker from the persistent
+role policy; pass explicit role flags only for an intentional operator override.
 
 The user's selection is a one-orchestration setting. Profile snapshots are
 durable and remain unchanged on resume unless the user **explicitly** changes

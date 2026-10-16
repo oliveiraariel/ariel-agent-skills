@@ -10,6 +10,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from collections import deque
+import queue
 import shutil
 import subprocess
 import sys
@@ -36,6 +38,64 @@ DURABLE_SINGLE_WORKER_FLAG = "--durable-single-worker"
 RUNTIME_MODULES = ("adaptive_orchestrator", "jsonschema", "websockets", "cryptography")
 DURABLE_ADMISSION_NOT_MATERIALIZED = 125
 ORCHESTRATION_ID_ALREADY_ADMITTED = 124
+DETERMINISTIC_PRE_ADMISSION_ERROR_TYPES = frozenset({"ExecutionProfileError"})
+
+
+class _StreamingCompleted:
+    def __init__(self, returncode: int, stderr: str) -> None:
+        self.returncode = returncode
+        self.stderr = stderr
+
+
+def _run_adaptive_process(
+    command: list[str], environment: dict[str, str]
+) -> _StreamingCompleted:
+    """Run Adaptive with live forwarding and bounded diagnostic retention."""
+    child = subprocess.Popen(
+        command, env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        text=True, bufsize=1,
+    )
+    events: queue.Queue[tuple[str, str]] = queue.Queue()
+    stderr_tail: deque[str] = deque(maxlen=64)
+
+    def drain(stream_name: str, stream) -> None:
+        try:
+            for line in iter(stream.readline, ""):
+                events.put((stream_name, line))
+        finally:
+            stream.close()
+
+    readers = [
+        threading.Thread(target=drain, args=("stdout", child.stdout), daemon=True),
+        threading.Thread(target=drain, args=("stderr", child.stderr), daemon=True),
+    ]
+    for reader in readers:
+        reader.start()
+    while child.poll() is None or any(reader.is_alive() for reader in readers) or not events.empty():
+        try:
+            stream_name, line = events.get(timeout=0.05)
+        except queue.Empty:
+            continue
+        output = sys.stdout if stream_name == "stdout" else sys.stderr
+        print(line, end="", file=output, flush=True)
+        if stream_name == "stderr":
+            stderr_tail.append(line[-16384:])
+    for reader in readers:
+        reader.join()
+    return _StreamingCompleted(child.returncode, "".join(stderr_tail))
+
+
+def _is_deterministic_pre_admission_failure(completed: object) -> bool:
+    """Classify Adaptive's structured error, never infer from exit status alone."""
+    raw = getattr(completed, "stderr", "") or ""
+    for line in reversed(str(raw).splitlines()):
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            return payload.get("error_type") in DETERMINISTIC_PRE_ADMISSION_ERROR_TYPES
+    return False
 
 
 def _register_terminal_observer_safely(
@@ -550,10 +610,8 @@ def _run_adaptive_with_admission_retry(
             watcher.start()
 
         try:
-            completed = subprocess.run(
-                [*command, adaptive_command, *guarded_arguments],
-                check=False,
-                env=environment,
+            completed = _run_adaptive_process(
+                [*command, adaptive_command, *guarded_arguments], environment
             )
         except OSError as exc:
             stop_event.set()
@@ -635,7 +693,7 @@ def _run_adaptive_with_admission_retry(
             )
 
         if requires_durable_checkpoint and not checkpoint_created:
-            if attempt < max_attempts:
+            if attempt < max_attempts and not _is_deterministic_pre_admission_failure(completed):
                 _emit_admission_event(
                     event="retrying-pre-admission-failure",
                     admission_id=bridge_invocation_id,
@@ -708,10 +766,15 @@ def _run_adaptive_with_admission_retry(
         if checkpoint_created:
             return completed.returncode
 
+        # Adaptive emits a structured error type for authoritative
+        # pre-admission configuration errors. Retrying the same immutable
+        # inputs cannot change that result and could create duplicate effects.
+        deterministic_pre_admission_failure = _is_deterministic_pre_admission_failure(completed)
         safe_pre_admission_failure = (
             adaptive_command == "orchestrate"
             and project_root is not None
             and not checkpoint_created
+            and not deterministic_pre_admission_failure
         )
         if safe_pre_admission_failure and attempt < max_attempts:
             _emit_admission_event(
@@ -835,6 +898,7 @@ def main(argv: list[str] | None = None) -> int:
         "takeover-work-unit",
         "fallback-direto",
         "execution-profile",
+        "agent-roles",
         "switch-execution-profile",
         "pause-project",
         "project-status",

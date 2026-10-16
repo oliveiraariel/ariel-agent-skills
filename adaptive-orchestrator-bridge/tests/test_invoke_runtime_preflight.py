@@ -317,6 +317,33 @@ def test_orchestrate_does_not_retry_after_checkpoint_exists(
     assert "retrying-pre-admission-failure" not in events
 
 
+def test_orchestrate_does_not_retry_deterministic_pre_admission_configuration_error(
+    monkeypatch, tmp_path, capsys
+):
+    project = tmp_path / "project"
+    project.mkdir()
+    calls = []
+
+    class Completed:
+        returncode = 1
+
+    def fake_run(args, **kwargs):
+        calls.append(args)
+        return Completed()
+
+    monkeypatch.setattr(bridge.subprocess, "run", fake_run)
+    result = bridge._run_adaptive_with_admission_retry(
+        command=[sys.executable, "-m", "adaptive_orchestrator"],
+        adaptive_command="orchestrate",
+        guarded_arguments=["--project-root", str(project), "--objective", "test"],
+        environment={},
+    )
+
+    assert result == 1
+    assert len(calls) == 1
+    assert "retrying-pre-admission-failure" not in capsys.readouterr().err
+
+
 def test_orchestrate_retries_once_after_child_launch_oserror(
     monkeypatch, tmp_path, capsys
 ):

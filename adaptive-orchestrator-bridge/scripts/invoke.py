@@ -635,7 +635,7 @@ def _run_adaptive_with_admission_retry(
             )
 
         if requires_durable_checkpoint and not checkpoint_created:
-            if attempt < max_attempts:
+            if attempt < max_attempts and completed.returncode != 1:
                 _emit_admission_event(
                     event="retrying-pre-admission-failure",
                     admission_id=bridge_invocation_id,
@@ -708,10 +708,16 @@ def _run_adaptive_with_admission_retry(
         if checkpoint_created:
             return completed.returncode
 
+        # Adaptive uses exit 1 for authoritative pre-admission configuration
+        # errors (including unresolved/conflicting agent roles). Retrying the
+        # same immutable inputs cannot change that result and could create
+        # duplicate side effects in a future adapter, so stop here.
+        deterministic_pre_admission_failure = completed.returncode == 1
         safe_pre_admission_failure = (
             adaptive_command == "orchestrate"
             and project_root is not None
             and not checkpoint_created
+            and not deterministic_pre_admission_failure
         )
         if safe_pre_admission_failure and attempt < max_attempts:
             _emit_admission_event(
@@ -835,6 +841,7 @@ def main(argv: list[str] | None = None) -> int:
         "takeover-work-unit",
         "fallback-direto",
         "execution-profile",
+        "agent-roles",
         "switch-execution-profile",
         "pause-project",
         "project-status",
